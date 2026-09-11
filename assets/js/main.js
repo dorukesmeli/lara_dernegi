@@ -1,0 +1,368 @@
+/* LARA Derneği — arayüz etkileşimleri */
+(function () {
+  'use strict';
+
+  var header  = document.getElementById('siteHeader');
+  var toggle  = document.getElementById('navToggle');
+  var nav     = document.getElementById('primaryNav');
+  var toTop   = document.getElementById('toTop');
+  var links   = Array.prototype.slice.call(nav.querySelectorAll('a[href^="#"]'));
+  var year    = document.getElementById('year');
+
+  if (year) year.textContent = new Date().getFullYear();
+
+  /* ================= DİL (TR / EN) ================= */
+  var DICT = window.I18N || { tr: {}, en: {} };
+  var STORE_KEY = 'lara-lang';
+  var lang = 'tr';
+
+  function t(key) {
+    var pack = DICT[lang] || DICT.tr;
+    return (pack && pack[key] !== undefined) ? pack[key] : null;
+  }
+
+  function applyLang(next) {
+    lang = (next === 'en') ? 'en' : 'tr';
+    var root = document.documentElement;
+    root.setAttribute('lang', lang);
+    root.setAttribute('data-lang', lang);
+
+    document.querySelectorAll('[data-i18n]').forEach(function (el) {
+      var v = t(el.getAttribute('data-i18n'));
+      if (v !== null) el.innerHTML = v;
+    });
+    document.querySelectorAll('[data-i18n-aria]').forEach(function (el) {
+      var v = t(el.getAttribute('data-i18n-aria'));
+      if (v !== null) el.setAttribute('aria-label', v);
+    });
+    document.querySelectorAll('[data-i18n-ph]').forEach(function (el) {
+      var v = t(el.getAttribute('data-i18n-ph'));
+      if (v !== null) el.setAttribute('placeholder', v);
+    });
+    document.querySelectorAll('[data-i18n-meta]').forEach(function (el) {
+      var v = t(el.getAttribute('data-i18n-meta'));
+      if (v !== null) el.setAttribute('content', v);
+    });
+
+    var title = t('meta.title');
+    if (title) document.title = title;
+
+    // menü açıkken etiket doğru kalsın
+    var open = nav.classList.contains('open');
+    toggle.setAttribute('aria-label', t(open ? 'a11y.menuClose' : 'a11y.menu') || '');
+
+    document.querySelectorAll('[data-set-lang]').forEach(function (b) {
+      b.classList.toggle('is-active', b.getAttribute('data-set-lang') === lang);
+      b.setAttribute('aria-pressed', String(b.getAttribute('data-set-lang') === lang));
+    });
+
+    // açık bir biyografi varsa onu da çevir
+    if (modal && !modal.hidden && modal.dataset.person) fillBio(modal.dataset.person);
+
+    try { localStorage.setItem(STORE_KEY, lang); } catch (e) {}
+  }
+
+  var startLang = 'tr';
+  try {
+    var saved = localStorage.getItem(STORE_KEY);
+    if (saved === 'tr' || saved === 'en') startLang = saved;
+    else if ((navigator.language || '').slice(0, 2).toLowerCase() !== 'tr') startLang = 'en';
+  } catch (e) {}
+
+  document.querySelectorAll('[data-set-lang]').forEach(function (b) {
+    b.addEventListener('click', function () { applyLang(b.getAttribute('data-set-lang')); });
+  });
+
+  /* ================= BİYOGRAFİ PENCERESİ ================= */
+  var modal     = document.getElementById('bioModal');
+  var bioName   = document.getElementById('bioName');
+  var bioRole   = document.getElementById('bioRole');
+  var bioBody   = document.getElementById('bioBody');
+  var bioAvatar = document.getElementById('bioAvatar');
+  var lastFocus = null;
+
+  function fillBio(id) {
+    var card = document.querySelector('.person[data-bio="' + id + '"]');
+    if (!card) return;
+    modal.dataset.person = id;
+    bioName.textContent   = card.dataset.name || '';
+    bioRole.innerHTML     = t('bio.' + id + '.role') || '';
+    bioBody.innerHTML     = t('bio.' + id + '.body') || '';
+    var big = card.dataset.photoLg || card.dataset.photo;
+    if (big) {
+      bioAvatar.outerHTML = '<img class="modal-photo" id="bioAvatar" src="' + big + '" alt="">';
+      bioAvatar = document.getElementById('bioAvatar');
+    } else {
+      if (bioAvatar.tagName === 'IMG') {
+        bioAvatar.outerHTML = '<div class="avatar" id="bioAvatar" aria-hidden="true"></div>';
+        bioAvatar = document.getElementById('bioAvatar');
+      }
+      bioAvatar.textContent = card.dataset.initials || '';
+      bioAvatar.className   = 'avatar ' + (card.dataset.avatar || 'av-navy');
+    }
+  }
+
+  function openBio(id) {
+    lastFocus = document.activeElement;
+    fillBio(id);
+    modal.hidden = false;
+    document.body.classList.add('modal-open');
+    var closeBtn = modal.querySelector('.modal-close');
+    if (closeBtn) closeBtn.focus();
+  }
+
+  function closeBio() {
+    modal.hidden = true;
+    delete modal.dataset.person;
+    document.body.classList.remove('modal-open');
+    if (lastFocus && lastFocus.focus) lastFocus.focus();
+  }
+
+  // kartta fotoğraf varsa baş harflerin yerine onu göster
+  document.querySelectorAll('.person[data-photo]').forEach(function (card) {
+    var av = card.querySelector('.avatar');
+    if (av) av.outerHTML = '<img class="person-photo" src="' + card.dataset.photo + '" alt="" loading="lazy" width="400" height="400">';
+  });
+
+  document.querySelectorAll('.person.has-bio').forEach(function (card) {
+    card.addEventListener('click', function () { openBio(card.dataset.bio); });
+    var btn = card.querySelector('.person-more');
+    if (btn) btn.addEventListener('click', function (e) { e.stopPropagation(); openBio(card.dataset.bio); });
+  });
+
+  modal.addEventListener('click', function (e) {
+    if (e.target.hasAttribute('data-close')) closeBio();
+  });
+
+
+  /* ================= ÜYELİK BAŞVURU FORMU ================= */
+  var joinModal   = document.getElementById('joinModal');
+  var joinForm    = document.getElementById('joinForm');
+  var joinWrap    = document.getElementById('joinFormWrap');
+  var joinOk      = document.getElementById('joinSuccess');
+  var joinBtn     = document.getElementById('joinSubmit');
+  var joinStatus  = document.getElementById('formStatus');
+  var openJoinBtn = document.getElementById('openJoinForm');
+  var CFG = window.LARA_FORM || {};
+
+  function setStatus(msg, kind) {
+    joinStatus.textContent = msg || '';
+    joinStatus.className = 'form-status' + (msg ? ' is-' + (kind || 'info') : '');
+  }
+
+  function clearErrors() {
+    joinForm.querySelectorAll('.field-error').forEach(function (e) { e.textContent = ''; });
+    joinForm.querySelectorAll('.has-error').forEach(function (e) { e.classList.remove('has-error'); });
+  }
+
+  function fieldError(input, msg) {
+    var field = input.closest('.field');
+    if (field) {
+      field.classList.add('has-error');
+      var slot = field.querySelector('.field-error');
+      if (slot) slot.textContent = msg;
+    }
+    return input;
+  }
+
+  function openJoin() {
+    lastFocus = document.activeElement;
+    joinModal.hidden = false;
+    document.body.classList.add('modal-open');
+    var c = joinModal.querySelector('.modal-close');
+    if (c) c.focus();
+  }
+
+  function closeJoin() {
+    joinModal.hidden = true;
+    document.body.classList.remove('modal-open');
+    if (lastFocus && lastFocus.focus) lastFocus.focus();
+  }
+
+  if (openJoinBtn) openJoinBtn.addEventListener('click', openJoin);
+  joinModal.addEventListener('click', function (e) {
+    if (e.target.hasAttribute('data-close')) closeJoin();
+  });
+
+  function validate() {
+    clearErrors();
+    var first = null;
+
+    joinForm.querySelectorAll('input[required], textarea[required]').forEach(function (input) {
+      if (input.type === 'checkbox') return;
+      if (!input.value.trim()) first = fieldError(input, t('form.required')) || first;
+    });
+
+    var email = joinForm.querySelector('input[type="email"]');
+    if (email.value.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.value.trim())) {
+      first = fieldError(email, t('form.emailInvalid')) || first;
+    }
+
+    var phone = joinForm.querySelector('input[type="tel"]');
+    if (phone.value.trim() && phone.value.replace(/\D/g, '').length < 10) {
+      first = fieldError(phone, t('form.phoneInvalid')) || first;
+    }
+
+    var birth = joinForm.querySelector('input[type="date"]');
+    if (birth.value) {
+      var b = new Date(birth.value), now = new Date();
+      var age = now.getFullYear() - b.getFullYear();
+      var m = now.getMonth() - b.getMonth();
+      if (m < 0 || (m === 0 && now.getDate() < b.getDate())) age--;
+      if (age < 18) first = fieldError(birth, t('form.age18')) || first;
+    }
+
+    var consentErr = document.getElementById('consentError');
+    var p = document.getElementById('chkPrinciples'), k = document.getElementById('chkKvkk');
+    if (!p.checked || !k.checked) {
+      consentErr.textContent = t('form.checkRequired') || t('form.required');
+      if (!first) first = p.checked ? k : p;
+    } else {
+      consentErr.textContent = '';
+    }
+
+    if (first) {
+      var f = first.closest('.field') || first;
+      f.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      if (first.focus) first.focus({ preventScroll: true });
+    }
+    return !first;
+  }
+
+  function collect() {
+    var data = { _subject: CFG.subject || 'ÜYELİK BAŞVURUSU', _template: 'table', _captcha: 'false' };
+    joinForm.querySelectorAll('input[name], select[name], textarea[name]').forEach(function (el) {
+      if (el.name === 'ilgi' || el.name === '_honey') return;
+      if (el.value.trim()) data[el.name] = el.value.trim();
+    });
+    var picked = [];
+    joinForm.querySelectorAll('input[name="ilgi"]:checked').forEach(function (c) { picked.push(c.value); });
+    if (picked.length) data['İlgi Alanları'] = picked.join(', ');
+    data['Onaylar'] = 'İlkeleri benimsiyor (18+) ✓ · KVKK aydınlatma metni onaylandı ✓';
+    data['Başvuru Tarihi'] = new Date().toLocaleString('tr-TR');
+    data['Site Dili'] = (lang === 'en') ? 'İngilizce' : 'Türkçe';
+    return data;
+  }
+
+  function showSuccess() {
+    joinWrap.hidden = true;
+    joinOk.hidden = false;
+    joinModal.querySelector('.modal-card').scrollTop = 0;
+  }
+
+  function sendMailto(data) {
+    var body = Object.keys(data)
+      .filter(function (k) { return k.charAt(0) !== '_'; })
+      .map(function (k) { return k + ': ' + data[k]; })
+      .join('\n');
+    window.location.href = 'mailto:' + CFG.email +
+      '?subject=' + encodeURIComponent(data._subject) +
+      '&body=' + encodeURIComponent(body);
+    setStatus(t('form.mailtoOpened'), 'ok');
+  }
+
+  joinForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    setStatus('');
+
+    // bot tuzağı doldurulduysa sessizce bitir
+    if (joinForm.querySelector('input[name="_honey"]').value) { showSuccess(); return; }
+    if (!validate()) return;
+
+    if (!CFG.email) { setStatus(t('form.notConfigured'), 'err'); return; }
+
+    var data = collect();
+
+    if (CFG.mode === 'mailto') { sendMailto(data); return; }
+
+    joinBtn.disabled = true;
+    joinBtn.textContent = t('form.sending');
+
+    fetch('https://formsubmit.co/ajax/' + encodeURIComponent(CFG.email), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify(data)
+    })
+      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function () { showSuccess(); })
+      .catch(function () {
+        setStatus(t('form.errTitle') + ' — ' + t('form.errBody'), 'err');
+        joinBtn.disabled = false;
+        joinBtn.textContent = t('form.submit');
+      });
+  });
+
+  /* ================= MOBİL MENÜ ================= */
+  function closeNav() {
+    nav.classList.remove('open');
+    toggle.setAttribute('aria-expanded', 'false');
+    toggle.setAttribute('aria-label', t('a11y.menu') || 'Menüyü aç');
+  }
+
+  toggle.addEventListener('click', function () {
+    var open = nav.classList.toggle('open');
+    toggle.setAttribute('aria-expanded', String(open));
+    toggle.setAttribute('aria-label', t(open ? 'a11y.menuClose' : 'a11y.menu') || '');
+  });
+
+  links.forEach(function (a) { a.addEventListener('click', closeNav); });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    if (!joinModal.hidden) { closeJoin(); return; }
+    if (!modal.hidden) { closeBio(); return; }
+    if (nav.classList.contains('open')) { closeNav(); toggle.focus(); }
+  });
+
+  document.addEventListener('click', function (e) {
+    if (nav.classList.contains('open') && !nav.contains(e.target) && !toggle.contains(e.target)) closeNav();
+  });
+
+  /* ================= SCROLL DAVRANIŞLARI ================= */
+  function onScroll() {
+    var y = window.scrollY || window.pageYOffset;
+    header.classList.toggle('scrolled', y > 8);
+    if (toTop) toTop.classList.toggle('show', y > 600);
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  var sections = links
+    .map(function (a) { return document.querySelector(a.getAttribute('href')); })
+    .filter(Boolean);
+
+  if ('IntersectionObserver' in window && sections.length) {
+    var spy = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) return;
+        var id = entry.target.id;
+        links.forEach(function (a) {
+          a.classList.toggle('active', a.getAttribute('href') === '#' + id);
+        });
+      });
+    }, { rootMargin: '-45% 0px -50% 0px', threshold: 0 });
+    sections.forEach(function (s) { spy.observe(s); });
+  }
+
+  var reveals = document.querySelectorAll('.reveal');
+  if ('IntersectionObserver' in window && reveals.length) {
+    var io = new IntersectionObserver(function (entries, obs) {
+      entries.forEach(function (entry, i) {
+        if (!entry.isIntersecting) return;
+        var el = entry.target;
+        setTimeout(function () { el.classList.add('visible'); }, Math.min(i * 70, 350));
+        obs.unobserve(el);
+      });
+    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
+    Array.prototype.forEach.call(reveals, function (el) { io.observe(el); });
+  } else {
+    Array.prototype.forEach.call(reveals, function (el) { el.classList.add('visible'); });
+  }
+
+  /* henüz doldurulmamış bağlantılar sayfayı zıplatmasın */
+  document.querySelectorAll('a[data-placeholder][href="#"]').forEach(function (a) {
+    a.addEventListener('click', function (e) { e.preventDefault(); });
+  });
+
+  applyLang(startLang);
+})();
