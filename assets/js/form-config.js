@@ -10,7 +10,7 @@ window.LARA_FORM = {
      "appsscript" → Google Apps Script Web App. Aşağıdaki appsScriptUrl dolu olmalıdır;
                     boş bırakılırsa form canlıda bozulmasın diye otomatik FormSubmit ile çalışır.
      "mailto"     → kişinin kendi e-posta uygulaması dolu bir mesajla açılır            */
-  provider: "formsubmit",
+  provider: "appsscript",
 
 
   /* ------------------------ Google Apps Script ------------------------ */
@@ -18,7 +18,7 @@ window.LARA_FORM = {
   /* Apps Script yayınlandıktan sonra verilen Web App adresi (…/exec ile biter).
      Bu adres gizli değildir. Apps Script kullanılırken alıcı adres ve mail içerikleri
      sunucu tarafındadır: apps-script/Code.gs → CONFIG. Tarayıcı alıcı adres göndermez. */
-  appsScriptUrl: "",
+  appsScriptUrl: "https://script.google.com/macros/s/AKfycbwp8mysEWAYSXiQbAMuPHI7sRWqKep6DFeGFyn7ww68OotDUyHNq17bp0FyzpMN04xq/exec",
 
 
   /* -------------------- FormSubmit (mevcut sistem) -------------------- */
