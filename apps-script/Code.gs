@@ -77,8 +77,13 @@ const NAME_RE  = /^\p{L}[\p{L}\p{M}'’. -]*\p{L}\.?$/u;
 const EMAIL_RE = /^[^\s@<>()[\]\\,;:"']{1,64}@[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*\.[A-Za-z]{2,24}$/;
 const PHONE_RE = /^\+?[\d\s().-]+$/;
 
-/* Görünmez / yön değiştiren karakterler (sıfır genişlik, bidi override vb.) — kaçış dizileriyle */
-const INVISIBLE_RE = /[\u200B-\u200F\u202A-\u202E\u2066-\u2069\uFEFF]/g;
+/* Görünmez / yön değiştiren karakterler (sıfır genişlik, bidi override vb.).
+   Kaynakta görünmez karakter bulunmasın diye kod noktalarıyla oluşturulur. */
+const INVISIBLE_RE = new RegExp('[' +
+  String.fromCharCode(0x200B) + '-' + String.fromCharCode(0x200F) +
+  String.fromCharCode(0x202A) + '-' + String.fromCharCode(0x202E) +
+  String.fromCharCode(0x2066) + '-' + String.fromCharCode(0x2069) +
+  String.fromCharCode(0xFEFF) + ']', 'g');
 
 
 /* ======================== HTTP GİRİŞ NOKTALARI ======================== */
