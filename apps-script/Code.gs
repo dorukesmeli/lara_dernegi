@@ -7,15 +7,25 @@
  *    1) İç bildirim : CONFIG.NOTIFY_TO adresine, formdaki tüm alanlarla
  *    2) Teyit maili : başvuru sahibine, formun diline göre Türkçe / İngilizce
  *
+ *  YANIT SÖZLEŞMESİ — sayfa yalnızca ilk biçimde başarı gösterir:
+ *    { ok: true,  internalNotificationSent: true,  confirmationSent: true }
+ *    { ok: false, internalNotificationSent: true,  confirmationSent: false, error: 'CONFIRMATION_FAILED' }
+ *    { ok: false, internalNotificationSent: false, confirmationSent: false, error: 'VALIDATION' | 'QUOTA' | ... }
+ *
+ *  TEKRAR KORUMASI (submissionId + içerik özeti)
+ *  - Her submissionId en fazla bir iç bildirim ve bir teyit maili üretir.
+ *  - Teyit maili başarısız olursa aynı başvurunun yeniden gönderimi yalnızca
+ *    teyit mailini tekrar dener; iç bildirim ikinci kez gönderilmez.
+ *  - Birebir aynı içerik 30 dakika içinde yeni bir kimlikle gelirse aynı başvuru sayılır.
+ *  - E-posta adresi bazlı sınır yoktur; farklı başvurular engellenmez.
+ *
  *  GÜVENLİK
  *  - Bu dosyada şifre, App Password, OAuth token veya secret YOKTUR.
- *  - Web App "Execute as: Me" ile yayınlanır. Mailler Google'ın kendi
- *    yetkilendirmesiyle, script sahibinin hesabından (laradernegi@gmail.com) gider.
+ *  - Web App "Execute as: Me" ile yayınlanır; mailler script sahibinin hesabından gider.
  *  - Alıcı adres ASLA tarayıcıdan alınmaz. İç bildirim yalnızca CONFIG.NOTIFY_TO'ya,
  *    teyit maili yalnızca doğrulanmış başvuru sahibine gider; içerikler sabit şablondur.
- *    Bu yüzden Web App başkalarına keyfi mail atmak için kullanılamaz.
  *  - Kullanıcı verisi temizlenir ve HTML-escape edilir; HTML/JS enjekte edilemez.
- *  - Aynı başvurunun tekrarı (çift tıklama, yeniden deneme) mail göndermez.
+ *  - Günlüklere telefon, doğum tarihi veya motivasyon metni yazılmaz.
  * ============================================================================
  */
 
@@ -42,11 +52,10 @@ const CONFIG = {
   },
 
   /* Tekrar koruması, saniye cinsinden (CacheService en fazla 21600 sn = 6 saat tutar) */
-  TTL_SUBMISSION_ID: 21600,     // aynı başvuru kimliği 6 saat boyunca tekrar işlenmez
-  TTL_SAME_APPLICATION: 1800,   // birebir aynı içerik 30 dakika boyunca tekrar işlenmez
-  TTL_CONFIRM_PER_EMAIL: 21600, // aynı adrese 6 saatte en fazla 1 teyit maili
+  TTL_SUBMISSION_STATE: 21600,  // başvurunun hangi maillerinin gittiği 6 saat saklanır
+  TTL_SAME_CONTENT: 1800,       // birebir aynı içerik 30 dakika boyunca aynı başvuru sayılır
 
-  /* Kötüye kullanıma karşı tüm site için saatlik üst sınır */
+  /* Kötüye kullanıma karşı tüm site için saatlik üst sınır (yeni başvurular) */
   MAX_APPLICATIONS_PER_HOUR: 30,
 
   /* true iken hiçbir mail gönderilmez; oluşturulan mailler yalnızca günlüğe yazılır */
@@ -76,6 +85,7 @@ const ALLOWED_INTERESTS = [
 const NAME_RE  = /^\p{L}[\p{L}\p{M}'’. -]*\p{L}\.?$/u;
 const EMAIL_RE = /^[^\s@<>()[\]\\,;:"']{1,64}@[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*\.[A-Za-z]{2,24}$/;
 const PHONE_RE = /^\+?[\d\s().-]+$/;
+const SUBMISSION_ID_RE = /^[A-Za-z0-9-]{8,64}$/;
 
 /* Görünmez / yön değiştiren karakterler (sıfır genişlik, bidi override vb.).
    Kaynakta görünmez karakter bulunmasın diye kod noktalarıyla oluşturulur. */
@@ -90,7 +100,7 @@ const INVISIBLE_RE = new RegExp('[' +
 
 /** Tarayıcıda adres açılınca çalışır: kurulumun doğru yapıldığını gösterir. */
 function doGet() {
-  return json_({ ok: true, service: 'lara-membership', version: 1 });
+  return json_({ ok: true, service: 'lara-membership', version: 2 });
 }
 
 /** Form buraya POST eder. Gövde düz metin olarak gelen JSON'dur. */
@@ -99,13 +109,14 @@ function doPost(e) {
   try {
     raw = JSON.parse((e && e.postData && e.postData.contents) || '');
   } catch (err) {
-    return json_({ ok: false, error: 'BAD_REQUEST' });
+    console.error(JSON.stringify({ event: 'submission_rejected', reason: 'BAD_REQUEST' }));
+    return json_(result_(false, false, false, 'BAD_REQUEST'));
   }
   try {
     return json_(handleSubmission_(raw));
   } catch (err) {
-    console.error('Beklenmeyen hata: ' + ((err && err.stack) || err));
-    return json_({ ok: false, error: 'SERVER' });
+    console.error(JSON.stringify({ event: 'server_error', error: errText_(err) }));
+    return json_(result_(false, false, false, 'SERVER'));
   }
 }
 
@@ -114,34 +125,71 @@ function doPost(e) {
 
 function handleSubmission_(raw, deps) {
   deps = deps || defaultDeps_();
+  const log = deps.log;
 
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
-    return { ok: false, error: 'BAD_REQUEST' };
+    log('submission_rejected', { reason: 'BAD_REQUEST' });
+    return result_(false, false, false, 'BAD_REQUEST');
   }
 
-  // Bot tuzağı: insanların göremediği alan doluysa sessizce "başarılı" dön, mail gönderme.
-  if (cleanText_(raw.honey)) return { ok: true };
+  // Bot tuzağı: gizli alan doluysa hiçbir mail gönderme; botu uyarmamak için başarı biçiminde dön.
+  if (cleanText_(raw.honey)) {
+    log('submission_rejected', { reason: 'HONEYPOT' });
+    return result_(true, true, true);
+  }
 
   const d = normalize_(raw);
   const invalid = validate_(d, deps);
-  if (invalid.length) return { ok: false, error: 'VALIDATION', fields: invalid };
+  if (invalid.length) {
+    log('submission_rejected', { reason: 'VALIDATION', fields: invalid });
+    const r = result_(false, false, false, 'VALIDATION');
+    r.fields = invalid;
+    return r;
+  }
 
-  if (!deps.lock.tryLock(15000)) return { ok: false, error: 'BUSY' };
+  log('submission_received', { submission_id: d.submissionId, applicant_email: d.email, lang: d.lang });
+
+  if (!deps.lock.tryLock(15000)) {
+    log('submission_rejected', { submission_id: d.submissionId, reason: 'BUSY' });
+    return result_(false, false, false, 'BUSY');
+  }
+
   try {
     const cache = deps.cache;
-    const sidKey = d.submissionId ? 'sid:' + d.submissionId : '';
-    const appKey = 'app:' + deps.digest(fingerprintSource_(d));
+    const contentKey = 'fp:' + deps.digest(fingerprintSource_(d));
+    let sid = d.submissionId;
 
-    // Aynı başvuru daha önce işlendiyse tekrar mail gönderme, ama kullanıcıya başarı dön.
-    if ((sidKey && cache.get(sidKey)) || cache.get(appKey)) {
-      return { ok: true, duplicate: true };
+    // Bu başvurunun hangi mailleri daha önce gitti?
+    let state = readState_(cache, sid);
+    if (!state) {
+      // Aynı içerik kısa süre önce başka bir kimlikle geldiyse, o başvurunun devamı say.
+      const earlierSid = cache.get(contentKey);
+      const earlier = (earlierSid && earlierSid !== sid) ? readState_(cache, earlierSid) : null;
+      if (earlier) {
+        log('duplicate_content', { submission_id: sid, original_submission_id: earlierSid });
+        sid = earlierSid;
+        state = earlier;
+      }
+    }
+    const isNew = !state;
+    state = state || { internal: false, confirmation: false };
+
+    if (state.internal && state.confirmation) {
+      log('duplicate_submission', { submission_id: sid });
+      const dup = result_(true, true, true);
+      dup.duplicate = true;
+      return dup;
     }
 
     const hourKey = 'rate:' + deps.formatDate(deps.now, 'yyyyMMddHH');
     const hourCount = Number(cache.get(hourKey) || 0);
-    if (hourCount >= CONFIG.MAX_APPLICATIONS_PER_HOUR) return { ok: false, error: 'RATE_LIMIT' };
+    if (isNew && hourCount >= CONFIG.MAX_APPLICATIONS_PER_HOUR) {
+      log('submission_rejected', { submission_id: sid, reason: 'RATE_LIMIT' });
+      return result_(false, false, false, 'RATE_LIMIT');
+    }
 
     const meta = {
+      submissionId: sid,
       receivedAt: deps.formatDate(deps.now, 'dd.MM.yyyy HH:mm'),
       age: ageOf_(d.birthDate, deps)
     };
@@ -154,51 +202,91 @@ function handleSubmission_(raw, deps) {
         '\nKonu: ' + notice.subject + '\n\n' + notice.text +
         '\n\n=== TEYİT MAİLİ ===\nKime: ' + d.email + '\nGönderen adı: ' + CONFIG.CONFIRM_SENDER_NAME[d.lang] +
         '\nKonu: ' + confirm.subject + '\n\n' + confirm.text);
-      return { ok: true, dryRun: true, notice: notice, confirm: confirm };
+      const dry = result_(true, true, true);
+      dry.dryRun = true;
+      dry.notice = notice;
+      dry.confirm = confirm;
+      return dry;
     }
 
-    if (deps.mail.remaining() < 1) return { ok: false, error: 'QUOTA' };
+    // Kota, bu başvurunun kalan maillerinin tamamına yetmiyorsa hiç başlama (yarım kalmasın).
+    const needed = (state.internal ? 0 : 1) + (state.confirmation ? 0 : 1);
+    if (deps.mail.remaining() < needed) {
+      log('submission_rejected', { submission_id: sid, reason: 'QUOTA' });
+      return result_(false, state.internal, state.confirmation, 'QUOTA');
+    }
 
-    // 1) İç bildirim. Başarısız olursa hata fırlar; hiçbir şey işaretlenmez, kullanıcı tekrar deneyebilir.
-    deps.mail.send({
-      to: CONFIG.NOTIFY_TO,
-      replyTo: d.email,                       // "Yanıtla" doğrudan başvurana gider
-      name: CONFIG.NOTIFY_SENDER_NAME,
-      subject: notice.subject,
-      body: notice.text,
-      htmlBody: notice.html
-    });
-
-    // Başvuru artık alınmış sayılır: tekrarları engelle.
-    if (sidKey) cache.put(sidKey, '1', CONFIG.TTL_SUBMISSION_ID);
-    cache.put(appKey, '1', CONFIG.TTL_SAME_APPLICATION);
-    cache.put(hourKey, String(hourCount + 1), 3600);
-
-    // 2) Teyit maili. Aynı adrese kısa sürede tekrar gitmez; hata olursa başvuru yine geçerlidir.
-    let confirmationSent = false;
-    const confirmKey = 'cf:' + deps.digest(d.email.toLowerCase());
-    if (!cache.get(confirmKey)) {
+    // 1) İç bildirim — yalnızca daha önce gitmediyse
+    if (!state.internal) {
+      log('internal_notification_attempted', { submission_id: sid });
       try {
-        if (deps.mail.remaining() >= 1) {
-          deps.mail.send({
-            to: d.email,
-            name: CONFIG.CONFIRM_SENDER_NAME[d.lang],
-            subject: confirm.subject,
-            body: confirm.text,
-            htmlBody: confirm.html
-          });
-          cache.put(confirmKey, '1', CONFIG.TTL_CONFIRM_PER_EMAIL);
-          confirmationSent = true;
-        }
+        deps.mail.send({
+          to: CONFIG.NOTIFY_TO,
+          replyTo: d.email,                   // "Yanıtla" doğrudan başvurana gider
+          name: CONFIG.NOTIFY_SENDER_NAME,
+          subject: notice.subject,
+          body: notice.text,
+          htmlBody: notice.html
+        });
       } catch (err) {
-        console.error('Teyit maili gönderilemedi (başvuru yine de alındı): ' + err);
+        log('internal_notification_error', { submission_id: sid, error: errText_(err) });
+        return result_(false, false, false, 'INTERNAL_NOTIFICATION_FAILED');
       }
+      state.internal = true;
+      writeState_(cache, sid, state, log);
+      cache.put(contentKey, sid, CONFIG.TTL_SAME_CONTENT);
+      if (isNew) cache.put(hourKey, String(hourCount + 1), 3600);
+      log('internal_notification_sent', { submission_id: sid });
     }
 
-    console.log('Başvuru alındı. Kimlik: ' + (d.submissionId || '—') + ' · teyit: ' + confirmationSent);
-    return { ok: true, confirmationSent: confirmationSent };
+    // 2) Teyit maili — hata YUTULMAZ: başarısızsa yanıt ok:false döner.
+    log('confirmation_attempted', { submission_id: sid, confirmation_recipient: d.email });
+    try {
+      deps.mail.send({
+        to: d.email,
+        name: CONFIG.CONFIRM_SENDER_NAME[d.lang],
+        subject: confirm.subject,
+        body: confirm.text,
+        htmlBody: confirm.html
+      });
+    } catch (err) {
+      log('confirmation_error', { submission_id: sid, confirmation_recipient: d.email, error: errText_(err) });
+      return result_(false, true, false, 'CONFIRMATION_FAILED');
+    }
+    state.confirmation = true;
+    writeState_(cache, sid, state, log);
+    log('confirmation_sent', { submission_id: sid, confirmation_recipient: d.email });
+
+    return result_(true, true, true);
   } finally {
     deps.lock.releaseLock();
+  }
+}
+
+/** Yanıt nesnesi — iki mailin durumu her yanıtta açıkça yer alır. */
+function result_(ok, internalNotificationSent, confirmationSent, error) {
+  const r = { ok: ok, internalNotificationSent: internalNotificationSent, confirmationSent: confirmationSent };
+  if (error) r.error = error;
+  return r;
+}
+
+function readState_(cache, sid) {
+  if (!sid) return null;
+  const v = cache.get('sub:' + sid);
+  if (!v) return null;
+  try {
+    const s = JSON.parse(v);
+    return { internal: s.internal === true, confirmation: s.confirmation === true };
+  } catch (err) {
+    return null;
+  }
+}
+
+function writeState_(cache, sid, state, log) {
+  try {
+    cache.put('sub:' + sid, JSON.stringify(state), CONFIG.TTL_SUBMISSION_STATE);
+  } catch (err) {
+    log('state_write_error', { submission_id: sid, error: errText_(err) });
   }
 }
 
@@ -232,7 +320,7 @@ function normalize_(raw) {
   }
   const sid = String(raw.submissionId || '');
   return {
-    submissionId: /^[A-Za-z0-9-]{8,64}$/.test(sid) ? sid : '',
+    submissionId: SUBMISSION_ID_RE.test(sid) ? sid : '',
     lang: raw.lang === 'en' ? 'en' : 'tr',
     fullName: cleanText_(raw.fullName),
     email: cleanText_(raw.email),
@@ -254,6 +342,8 @@ function normalize_(raw) {
 function validate_(d, deps) {
   const bad = [];
   const L = CONFIG.MAX_LEN;
+
+  if (!d.submissionId) bad.push('submissionId');
 
   // Ad soyad: "site.com" gibi adres benzeri ifadeler de reddedilir.
   if (!d.fullName || d.fullName.length > L.fullName || !NAME_RE.test(d.fullName) ||
@@ -327,7 +417,7 @@ function buildNotification_(d, meta) {
     ['Onaylar', onaylar],
     ['Başvuru Tarihi ve Saati', meta.receivedAt],
     ['Formun Doldurulduğu Dil', d.lang === 'en' ? 'İngilizce' : 'Türkçe'],
-    ['Başvuru Kimliği', d.submissionId || '—']
+    ['Başvuru Kimliği', meta.submissionId]
   ];
 
   const text = intro + '\n\n' +
@@ -438,6 +528,10 @@ function formatBirth_(ymd) {
   return m ? m[3] + '.' + m[2] + '.' + m[1] : ymd;
 }
 
+function errText_(err) {
+  return String((err && err.message) || err).slice(0, 500);
+}
+
 function sha256_(text) {
   const bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, text, Utilities.Charset.UTF_8);
   return bytes.map(function (b) { return ('0' + (b & 0xff).toString(16)).slice(-2); }).join('');
@@ -455,6 +549,10 @@ function defaultDeps_() {
     lock: LockService.getScriptLock(),
     digest: sha256_,
     formatDate: function (date, pattern) { return Utilities.formatDate(date, CONFIG.TIMEZONE, pattern); },
+    log: function (event, data) {
+      const entry = JSON.stringify(Object.assign({ event: event }, data || {}));
+      if (event.indexOf('error') !== -1) console.error(entry); else console.log(entry);
+    },
     mail: {
       send: function (message) { MailApp.sendEmail(message); },
       remaining: function () { return MailApp.getRemainingDailyQuota(); }
@@ -466,39 +564,58 @@ function defaultDeps_() {
 /* ==================== EDİTÖRDEN ÇALIŞTIRILACAK TESTLER ====================
    Apps Script editöründe üstteki fonksiyon listesinden seçip "Çalıştır" de.   */
 
+/* testHariciTeyit için test adresi. YALNIZCA Apps Script editöründe doldur;
+   kişisel bir adresi repoya yazma. */
+const TEST_TEYIT_ADRESI = '';
+
 /** Mail GÖNDERMEZ. Örnek başvuruyu doğrular, iki maili oluşturup Yürütme günlüğüne yazar. */
 function testKuruCalisma() {
   const deps = defaultDeps_();
   deps.dryRun = true;
-  const result = handleSubmission_(ornekBasvuru_('tr'), deps);
-  console.log('Sonuç: ' + JSON.stringify({ ok: result.ok, dryRun: result.dryRun, error: result.error, fields: result.fields }));
+  const r = handleSubmission_(ornekBasvuru_('tr', 'kuru-' + Date.now()), deps);
+  console.log('Sonuç: ' + JSON.stringify({ ok: r.ok, dryRun: r.dryRun, error: r.error, fields: r.fields }));
 }
 
 /** Mail GÖNDERMEZ. Hatalı bir başvurunun reddedildiğini gösterir. */
 function testHataliBasvuru() {
   const deps = defaultDeps_();
   deps.dryRun = true;
-  const kotu = ornekBasvuru_('tr');
+  const kotu = ornekBasvuru_('tr', 'hatali-' + Date.now());
   kotu.email = 'gecersiz-adres';
   kotu.birthDate = '2015-01-01';
   kotu.consentKvkk = false;
   console.log('Beklenen: VALIDATION → ' + JSON.stringify(handleSubmission_(kotu, deps)));
 }
 
-/** GERÇEK MAİL GÖNDERİR — iki mail de CONFIG.NOTIFY_TO adresine düşer (teyit mailinin görünümünü görmek için). */
+/** GERÇEK MAİL GÖNDERİR — iki mail de CONFIG.NOTIFY_TO adresine düşer. */
 function testGercekGonderim() {
-  const ornek = ornekBasvuru_('tr');
+  const ornek = ornekBasvuru_('tr', 'test-' + Date.now());
   ornek.email = CONFIG.NOTIFY_TO;
-  ornek.submissionId = 'test-' + Date.now();
-  ornek.motivation = 'Test gönderimi · ' + new Date().toISOString();
-  CacheService.getScriptCache().remove('cf:' + sha256_(ornek.email.toLowerCase()));
-  console.log(JSON.stringify(handleSubmission_(ornek)));
+  ornek.motivation = 'Test gönderimi ' + new Date().toISOString();
+  console.log('Sonuç: ' + JSON.stringify(handleSubmission_(ornek)));
 }
 
-function ornekBasvuru_(lang) {
+/** GERÇEK MAİL GÖNDERİR — teyit maili TEST_TEYIT_ADRESI'ne gider (canlıdaki gerçek yol). */
+function testHariciTeyit() {
+  if (!TEST_TEYIT_ADRESI) {
+    console.log('Önce dosyadaki TEST_TEYIT_ADRESI sabitine bir test adresi yaz (yalnızca editörde).');
+    return;
+  }
+  const ornek = ornekBasvuru_('tr', 'harici-' + Date.now());
+  ornek.email = TEST_TEYIT_ADRESI;
+  ornek.motivation = 'Harici teyit testi ' + new Date().toISOString();
+  console.log('Sonuç: ' + JSON.stringify(handleSubmission_(ornek)));
+}
+
+/** Mail GÖNDERMEZ. Kalan günlük mail kotasını yazar. */
+function testMailKotasi() {
+  console.log('Kalan günlük mail kotası: ' + MailApp.getRemainingDailyQuota());
+}
+
+function ornekBasvuru_(lang, submissionId) {
   return {
     v: 1,
-    submissionId: 'ornek-0000-0000',
+    submissionId: submissionId,
     lang: lang,
     fullName: 'Ayşe Yılmaz',
     email: 'ayse.yilmaz@example.com',

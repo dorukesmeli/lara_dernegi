@@ -136,6 +136,9 @@
 
 
   /* ================= ÜYELİK BAŞVURU FORMU ================= */
+  /* Başvurular Google Apps Script Web App'e gönderilir (form-config.js → appsScriptUrl).
+     Kullanıcı yalnızca sunucu hem iç bildirimi hem teyit mailini gönderdiğini
+     bildirirse başarı mesajı görür. */
   var joinModal   = document.getElementById('joinModal');
   var joinForm    = document.getElementById('joinForm');
   var joinWrap    = document.getElementById('joinFormWrap');
@@ -145,7 +148,7 @@
   var openJoinBtn = document.getElementById('openJoinForm');
   var CFG = window.LARA_FORM || {};
   var sending = false;        // çift gönderimi engeller
-  var formOpenedAt = 0;       // bot tuzağı: form anında gönderilmişse şüpheli
+  var formOpenedAt = 0;       // form açılır açılmaz gelen gönderimler kısa süre bekletilir
   var turnstileReady = false;
   var submissionId = null;    // aynı başvurunun yeniden denemelerinde aynı kalır (sunucuda tekrar koruması)
 
@@ -156,19 +159,7 @@
     return h.slice(0, 8) + '-' + h.slice(8, 12) + '-' + h.slice(12, 16) + '-' + h.slice(16, 20) + '-' + h.slice(20);
   }
 
-  /* Hangi gönderim sağlayıcısı kullanılacak? (form-config.js → provider)
-     Apps Script seçili ama adres girilmemişse, canlı formu bozmamak için FormSubmit'e döner. */
-  function aktifSaglayici() {
-    var p = String(CFG.provider || CFG.mode || 'formsubmit').toLowerCase();
-    if (p === 'appsscript' && !CFG.appsScriptUrl) {
-      if (window.console) console.warn('LARA_FORM: provider "appsscript" seçili ama appsScriptUrl boş — FormSubmit kullanılıyor.');
-      return 'formsubmit';
-    }
-    return p;
-  }
-
-  /* Cloudflare Turnstile — sadece form-config.js'de site anahtarı varsa yüklenir.
-     Gizli anahtar (secret key) burada KULLANILMAZ, sunucu tarafına aittir. */
+  /* Cloudflare Turnstile — sadece form-config.js'de site anahtarı varsa yüklenir. */
   function initTurnstile() {
     var box = document.getElementById('turnstileBox');
     if (!box || !CFG.turnstileSiteKey || turnstileReady) return;
@@ -186,8 +177,7 @@
     var max = CFG.maxSubmitsPerHour || 3, now = Date.now(), list = [];
     try { list = JSON.parse(localStorage.getItem('lara_form_sent') || '[]'); } catch (e) { list = []; }
     list = list.filter(function (ts) { return now - ts < 3600000; });
-    if (list.length >= max) return true;
-    return false;
+    return list.length >= max;
   }
   function markSubmitted() {
     var now = Date.now(), list = [];
@@ -283,52 +273,9 @@
     return !first;
   }
 
-  function val(name) {
-    var el = joinForm.querySelector('[name="' + name + '"]');
-    return (el && el.value.trim()) ? el.value.trim() : '—';
-  }
-
-  function collect() {
-    var adSoyad = val('Ad Soyad');
-    var basvuranEposta = val('E-posta');
-    var picked = [];
-    joinForm.querySelectorAll('input[name="ilgi"]:checked').forEach(function (c) { picked.push(c.value); });
-
-    /* Alan sırası e-postada da aynen korunur */
-    var data = {
-      _subject: (CFG.subjectPrefix || 'Yeni Üyelik Başvurusu') + ' – ' + adSoyad,
-      _template: 'table',
-      _captcha: 'false',
-      /* Gelen başvuru e-postasında "Yanıtla" denince cevap doğrudan başvurana gider */
-      _replyto: basvuranEposta,
-
-      'Bilgilendirme': 'Yeni bir LARA Derneği üyelik başvurusu alınmıştır.',
-      'Ad Soyad': adSoyad,
-      'E-posta': basvuranEposta,
-      'Telefon': val('Telefon'),
-      'Doğum Tarihi': val('Doğum Tarihi'),
-      'Şehir': val('Şehir'),
-      'Meslek / Bölüm': val('Meslek / Bölüm'),
-      'Bildiği Yabancı Diller': val('Yabancı Diller'),
-      'Daha önce Erasmus+ veya gençlik projesine katıldı mı?': val('Proje Deneyimi'),
-      'İlgi Alanları': picked.length ? picked.join(', ') : '—',
-      'Neden LARA\'ya Katılmak İstiyor?': val('Motivasyon'),
-      'Onaylar': '18 yaşından büyük ve ilkeleri benimsiyor ✓ · KVKK metni onaylandı ✓',
-      'Başvuru Tarihi ve Saati': new Date().toLocaleString('tr-TR'),
-      'Formun Doldurulduğu Dil': (lang === 'en') ? 'İngilizce' : 'Türkçe',
-      'Kaynak': 'Bu başvuru ' + (CFG.siteAdresi || location.hostname) + ' üzerindeki üyelik formundan gönderilmiştir.'
-    };
-
-    if (CFG.turnstileSiteKey) {
-      var tokenEl = joinForm.querySelector('[name="cf-turnstile-response"]');
-      if (tokenEl && tokenEl.value) data['cf-turnstile-response'] = tokenEl.value;
-    }
-    return data;
-  }
-
-  /* Apps Script için sabit anahtarlı sade veri. Etiketler ve e-posta biçimi sunucuda oluşturulur;
+  /* Sunucuya giden sade veri. Etiketler ve e-posta biçimi sunucuda oluşturulur;
      alıcı adres tarayıcıdan gönderilmez. */
-  function collectAppsScript() {
+  function basvuruVerisi() {
     function ham(name) {
       var el = joinForm.querySelector('[name="' + name + '"]');
       return el ? el.value.trim() : '';
@@ -353,7 +300,7 @@
       motivation: ham('Motivasyon'),
       consentPrinciples: !!(p && p.checked),
       consentKvkk: !!(k && k.checked),
-      honey: ham('_honey')
+      honey: ham('website')
     };
   }
 
@@ -363,15 +310,17 @@
     joinModal.querySelector('.modal-card').scrollTop = 0;
   }
 
-  function sendMailto(data) {
-    var body = Object.keys(data)
-      .filter(function (k) { return k.charAt(0) !== '_'; })
-      .map(function (k) { return k + ': ' + data[k]; })
-      .join('\n');
-    window.location.href = 'mailto:' + CFG.email +
-      '?subject=' + encodeURIComponent(data._subject) +
-      '&body=' + encodeURIComponent(body);
-    setStatus(t('form.mailtoOpened'), 'ok');
+  /* Başarı yalnızca sunucu iki maili de gönderdiğini açıkça bildirirse */
+  function sunucuBasarili(res) {
+    return !!res && res.ok === true && res.internalNotificationSent === true && res.confirmationSent === true;
+  }
+
+  function gonderimBasarisiz() {
+    setStatus(t('form.errBody'), 'err');
+    sending = false;
+    joinBtn.disabled = false;
+    joinBtn.textContent = t('form.submit');
+    if (window.turnstile && CFG.turnstileSiteKey) { try { window.turnstile.reset(); } catch (e) {} }
   }
 
   joinForm.addEventListener('submit', function (e) {
@@ -380,7 +329,7 @@
     setStatus('');
 
     // bot tuzağı: insanların göremediği alan doldurulmuşsa gönderme
-    var honey = joinForm.querySelector('input[name="_honey"]');
+    var honey = joinForm.querySelector('input[name="website"]');
     if (honey && honey.value) { showSuccess(); return; }
 
     if (!validate()) return;
@@ -391,12 +340,9 @@
     }
 
     if (rateLimited()) { setStatus(t('form.tooMany'), 'err'); return; }
+    if (!CFG.appsScriptUrl) { setStatus(t('form.notConfigured'), 'err'); return; }
 
-    var saglayici = aktifSaglayici();
-    if (saglayici !== 'appsscript' && !CFG.email && !CFG.endpointId) { setStatus(t('form.notConfigured'), 'err'); return; }
-
-    var data = (saglayici === 'appsscript') ? collectAppsScript() : collect();
-    if (saglayici === 'mailto') { sendMailto(data); return; }
+    var payload = basvuruVerisi();
 
     sending = true;
     joinBtn.disabled = true;
@@ -406,56 +352,39 @@
        Engellemek yerine geciktirmek, otomatik doldurma kullanan gerçek kişilerin
        başvurusunun kaybolmasını önler. */
     var bekle = Math.max(0, 2500 - (Date.now() - formOpenedAt));
-    setTimeout(function () {
-      if (saglayici === 'appsscript') gonderAppsScript(data);
-      else gonder(data);
-    }, bekle);
+    setTimeout(function () { gonder(payload); }, bekle);
   });
 
-  function gonder(data) {
-    var hedef = CFG.endpointId || CFG.email;   // kimlik varsa e-posta kaynakta görünmez
-    fetch('https://formsubmit.co/ajax/' + encodeURIComponent(hedef), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify(data)
-    })
-      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-      .then(function (res) {
-        if (res && res.success === 'false') throw new Error('reddedildi');
-        gonderimBasarili();
-      })
-      .catch(gonderimBasarisiz);
-  }
-
-  /* Google Apps Script Web App.
+  /* Google Apps Script Web App'e gönderim.
      Gövde JSON'dur ama "text/plain" olarak gönderilir: Apps Script CORS ön kontrolünü (OPTIONS)
      desteklemez, düz metin isteği ise ön kontrol gerektirmez. */
-  function gonderAppsScript(payload) {
+  function gonder(payload) {
+    var bitti = false;
+    var controller = (typeof AbortController === 'function') ? new AbortController() : null;
+    var zamanAsimi = setTimeout(function () {
+      if (controller) controller.abort();
+      sonuc(false);
+    }, CFG.timeoutMs || 45000);
+
+    function sonuc(basarili) {
+      if (bitti) return;                       // zaman aşımından sonra gelen geç yanıtı yok say
+      bitti = true;
+      clearTimeout(zamanAsimi);
+      if (basarili) { markSubmitted(); showSuccess(); }
+      else gonderimBasarisiz();
+    }
+
     fetch(CFG.appsScriptUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify(payload),
-      redirect: 'follow'
+      redirect: 'follow',
+      cache: 'no-store',
+      signal: controller ? controller.signal : undefined
     })
       .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-      .then(function (res) {
-        if (!res || res.ok !== true) throw new Error((res && res.error) || 'reddedildi');
-        gonderimBasarili();
-      })
-      .catch(gonderimBasarisiz);
-  }
-
-  function gonderimBasarili() {
-    markSubmitted();
-    showSuccess();
-  }
-
-  function gonderimBasarisiz() {
-    setStatus(t('form.errBody'), 'err');
-    sending = false;
-    joinBtn.disabled = false;
-    joinBtn.textContent = t('form.submit');
-    if (window.turnstile && CFG.turnstileSiteKey) { try { window.turnstile.reset(); } catch (e) {} }
+      .then(function (res) { sonuc(sunucuBasarili(res)); })
+      .catch(function () { sonuc(false); });
   }
 
   /* ================= MOBİL MENÜ ================= */
