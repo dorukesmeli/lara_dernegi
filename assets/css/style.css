@@ -574,6 +574,7 @@ body.modal-open{overflow:hidden}
 
 .honey{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
 
+.turnstile-box{margin-top:1.2rem;display:flex;justify-content:center}
 .form-status{font-size:.9rem;margin:1.1rem 0 0;padding:0}
 .form-status.is-err{
   background:var(--orange-soft);color:var(--orange-dark);border-radius:11px;

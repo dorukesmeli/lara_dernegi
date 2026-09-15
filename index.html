@@ -11,18 +11,32 @@
 <meta property="og:type" content="website">
 <meta property="og:title" content="LARA Derneği — Learning · Action · Rights · Access">
 <meta property="og:description" content="Antalya merkezli gençlik derneği. Erasmus+ ve Avrupa Dayanışma Programı projeleri, eğitim çalışmaları ve uluslararası işbirlikleri.">
-<link rel="canonical" href="https://laradernegi.org/">
-<meta property="og:url" content="https://laradernegi.org/">
+<link rel="canonical" href="https://laraassociation.org/">
+<meta property="og:url" content="https://laraassociation.org/">
 <meta property="og:site_name" content="LARA Derneği">
-<meta property="og:image" content="https://laradernegi.org/assets/img/og-image.png">
+<meta property="og:image" content="https://laraassociation.org/assets/img/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta property="og:locale" content="tr_TR">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "NGO",
+  "name": "LARA Derneği",
+  "alternateName": "LARA Association",
+  "url": "https://laraassociation.org/",
+  "logo": "https://laraassociation.org/assets/img/logo-mark.png",
+  "image": "https://laraassociation.org/assets/img/og-image.png",
+  "address": { "@type": "PostalAddress", "addressLocality": "Antalya", "addressCountry": "TR" },
+  "areaServed": "Worldwide",
+  "knowsLanguage": ["tr", "en"]
+}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/style.css?v=17">
+<link rel="stylesheet" href="assets/css/style.css?v=19">
 </head>
 <body>
 
@@ -493,7 +507,7 @@
             <span class="ci ci-mail" aria-hidden="true"></span>
             <div><span class="ci-label" data-i18n="contact.email">E-posta</span>
             <!-- TODO: e-posta adresini ekle -->
-            <a href="mailto:ornek@laradernegi.org" data-placeholder>ornek@laradernegi.org</a></div>
+            <a href="mailto:ornek@laraassociation.org" data-placeholder>ornek@laraassociation.org</a></div>
           </li>
           <li>
             <span class="ci ci-phone" aria-hidden="true"></span>
@@ -671,6 +685,9 @@
         <!-- spam tuzağı: insanlar görmez, botlar doldurur -->
         <input type="text" name="_honey" tabindex="-1" autocomplete="off" aria-hidden="true" class="honey">
 
+        <!-- Cloudflare Turnstile — form-config.js'de site anahtarı tanımlanınca görünür olur -->
+        <div class="cf-turnstile turnstile-box" id="turnstileBox" hidden></div>
+
         <div class="form-status" id="formStatus" role="status" aria-live="polite"></div>
 
         <button type="submit" class="btn btn-primary btn-block" id="joinSubmit" data-i18n="form.submit">Üyelik Bilgilerini Gönder</button>
@@ -691,8 +708,8 @@
 
 <a class="to-top" href="#anasayfa" id="toTop" data-i18n-aria="a11y.top" aria-label="Yukarı çık">↑</a>
 
-<script src="assets/js/form-config.js?v=17"></script>
-<script src="assets/js/i18n.js?v=17"></script>
-<script src="assets/js/main.js?v=17" defer></script>
+<script src="assets/js/form-config.js?v=19"></script>
+<script src="assets/js/i18n.js?v=19"></script>
+<script src="assets/js/main.js?v=19" defer></script>
 </body>
 </html>

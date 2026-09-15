@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://laradernegi.org/sitemap.xml
+Sitemap: https://laraassociation.org/sitemap.xml

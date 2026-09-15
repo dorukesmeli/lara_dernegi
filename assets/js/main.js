@@ -144,6 +144,39 @@
   var joinStatus  = document.getElementById('formStatus');
   var openJoinBtn = document.getElementById('openJoinForm');
   var CFG = window.LARA_FORM || {};
+  var sending = false;        // çift gönderimi engeller
+  var formOpenedAt = 0;       // bot tuzağı: form anında gönderilmişse şüpheli
+  var turnstileReady = false;
+
+  /* Cloudflare Turnstile — sadece form-config.js'de site anahtarı varsa yüklenir.
+     Gizli anahtar (secret key) burada KULLANILMAZ, sunucu tarafına aittir. */
+  function initTurnstile() {
+    var box = document.getElementById('turnstileBox');
+    if (!box || !CFG.turnstileSiteKey || turnstileReady) return;
+    turnstileReady = true;
+    box.hidden = false;
+    box.setAttribute('data-sitekey', CFG.turnstileSiteKey);
+    var sc = document.createElement('script');
+    sc.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+    sc.async = true; sc.defer = true;
+    document.head.appendChild(sc);
+  }
+
+  /* Aynı tarayıcıdan kısa sürede çok sayıda gönderimi sınırlar */
+  function rateLimited() {
+    var max = CFG.maxSubmitsPerHour || 3, now = Date.now(), list = [];
+    try { list = JSON.parse(localStorage.getItem('lara_form_sent') || '[]'); } catch (e) { list = []; }
+    list = list.filter(function (ts) { return now - ts < 3600000; });
+    if (list.length >= max) return true;
+    return false;
+  }
+  function markSubmitted() {
+    var now = Date.now(), list = [];
+    try { list = JSON.parse(localStorage.getItem('lara_form_sent') || '[]'); } catch (e) { list = []; }
+    list = list.filter(function (ts) { return now - ts < 3600000; });
+    list.push(now);
+    try { localStorage.setItem('lara_form_sent', JSON.stringify(list)); } catch (e) {}
+  }
 
   function setStatus(msg, kind) {
     joinStatus.textContent = msg || '';
@@ -166,6 +199,8 @@
   }
 
   function openJoin() {
+    formOpenedAt = Date.now();
+    initTurnstile();
     lastFocus = document.activeElement;
     joinModal.hidden = false;
     document.body.classList.add('modal-open');
@@ -229,18 +264,46 @@
     return !first;
   }
 
+  function val(name) {
+    var el = joinForm.querySelector('[name="' + name + '"]');
+    return (el && el.value.trim()) ? el.value.trim() : '—';
+  }
+
   function collect() {
-    var data = { _subject: CFG.subject || 'ÜYELİK BAŞVURUSU', _template: 'table', _captcha: 'false' };
-    joinForm.querySelectorAll('input[name], select[name], textarea[name]').forEach(function (el) {
-      if (el.name === 'ilgi' || el.name === '_honey') return;
-      if (el.value.trim()) data[el.name] = el.value.trim();
-    });
+    var adSoyad = val('Ad Soyad');
+    var basvuranEposta = val('E-posta');
     var picked = [];
     joinForm.querySelectorAll('input[name="ilgi"]:checked').forEach(function (c) { picked.push(c.value); });
-    if (picked.length) data['İlgi Alanları'] = picked.join(', ');
-    data['Onaylar'] = 'İlkeleri benimsiyor (18+) ✓ · KVKK aydınlatma metni onaylandı ✓';
-    data['Başvuru Tarihi'] = new Date().toLocaleString('tr-TR');
-    data['Site Dili'] = (lang === 'en') ? 'İngilizce' : 'Türkçe';
+
+    /* Alan sırası e-postada da aynen korunur */
+    var data = {
+      _subject: (CFG.subjectPrefix || 'Yeni Üyelik Başvurusu') + ' – ' + adSoyad,
+      _template: 'table',
+      _captcha: 'false',
+      /* Gelen başvuru e-postasında "Yanıtla" denince cevap doğrudan başvurana gider */
+      _replyto: basvuranEposta,
+
+      'Bilgilendirme': 'Yeni bir LARA Derneği üyelik başvurusu alınmıştır.',
+      'Ad Soyad': adSoyad,
+      'E-posta': basvuranEposta,
+      'Telefon': val('Telefon'),
+      'Doğum Tarihi': val('Doğum Tarihi'),
+      'Şehir': val('Şehir'),
+      'Meslek / Bölüm': val('Meslek / Bölüm'),
+      'Bildiği Yabancı Diller': val('Yabancı Diller'),
+      'Daha önce Erasmus+ veya gençlik projesine katıldı mı?': val('Proje Deneyimi'),
+      'İlgi Alanları': picked.length ? picked.join(', ') : '—',
+      'Neden LARA\'ya Katılmak İstiyor?': val('Motivasyon'),
+      'Onaylar': '18 yaşından büyük ve ilkeleri benimsiyor ✓ · KVKK metni onaylandı ✓',
+      'Başvuru Tarihi ve Saati': new Date().toLocaleString('tr-TR'),
+      'Formun Doldurulduğu Dil': (lang === 'en') ? 'İngilizce' : 'Türkçe',
+      'Kaynak': 'Bu başvuru ' + (CFG.siteAdresi || location.hostname) + ' üzerindeki üyelik formundan gönderilmiştir.'
+    };
+
+    if (CFG.turnstileSiteKey) {
+      var tokenEl = joinForm.querySelector('[name="cf-turnstile-response"]');
+      if (tokenEl && tokenEl.value) data['cf-turnstile-response'] = tokenEl.value;
+    }
     return data;
   }
 
@@ -263,34 +326,58 @@
 
   joinForm.addEventListener('submit', function (e) {
     e.preventDefault();
+    if (sending) return;                       // çift tıklama koruması
     setStatus('');
 
-    // bot tuzağı doldurulduysa sessizce bitir
-    if (joinForm.querySelector('input[name="_honey"]').value) { showSuccess(); return; }
+    // bot tuzağı: insanların göremediği alan doldurulmuşsa gönderme
+    var honey = joinForm.querySelector('input[name="_honey"]');
+    if (honey && honey.value) { showSuccess(); return; }
+
     if (!validate()) return;
 
-    if (!CFG.email) { setStatus(t('form.notConfigured'), 'err'); return; }
+    if (CFG.turnstileSiteKey) {
+      var tok = joinForm.querySelector('[name="cf-turnstile-response"]');
+      if (!tok || !tok.value) { setStatus(t('form.captchaNeeded'), 'err'); return; }
+    }
+
+    if (rateLimited()) { setStatus(t('form.tooMany'), 'err'); return; }
+    if (!CFG.email && !CFG.endpointId) { setStatus(t('form.notConfigured'), 'err'); return; }
 
     var data = collect();
-
     if (CFG.mode === 'mailto') { sendMailto(data); return; }
 
+    sending = true;
     joinBtn.disabled = true;
     joinBtn.textContent = t('form.sending');
 
-    fetch('https://formsubmit.co/ajax/' + encodeURIComponent(CFG.email), {
+    /* Form açılır açılmaz gönderilmişse (tipik bot davranışı) isteği biraz geciktiririz.
+       Engellemek yerine geciktirmek, otomatik doldurma kullanan gerçek kişilerin
+       başvurusunun kaybolmasını önler. */
+    var bekle = Math.max(0, 2500 - (Date.now() - formOpenedAt));
+    setTimeout(function () { gonder(data); }, bekle);
+  });
+
+  function gonder(data) {
+    var hedef = CFG.endpointId || CFG.email;   // kimlik varsa e-posta kaynakta görünmez
+    fetch('https://formsubmit.co/ajax/' + encodeURIComponent(hedef), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
       body: JSON.stringify(data)
     })
       .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-      .then(function () { showSuccess(); })
+      .then(function (res) {
+        if (res && res.success === 'false') throw new Error('reddedildi');
+        markSubmitted();
+        showSuccess();
+      })
       .catch(function () {
-        setStatus(t('form.errTitle') + ' — ' + t('form.errBody'), 'err');
+        setStatus(t('form.errBody'), 'err');
+        sending = false;
         joinBtn.disabled = false;
         joinBtn.textContent = t('form.submit');
+        if (window.turnstile && CFG.turnstileSiteKey) { try { window.turnstile.reset(); } catch (e) {} }
       });
-  });
+  }
 
   /* ================= MOBİL MENÜ ================= */
   function closeNav() {
