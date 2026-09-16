@@ -48,9 +48,9 @@ tr: {
 
 "org.eyebrow":"Kurumsal Yapı","org.title":"Dernek Organları",
 "org.c1t":"Genel Kurul","org.c1d":"Derneğin en yetkili karar organıdır ve derneğe kayıtlı üyelerden oluşur. Organların seçimi, bütçenin kabulü ve temel kararlar genel kurulda alınır.",
-"org.c2t":"Yönetim Kurulu","org.c2d":"Beş asıl ve beş yedek üye olarak genel kurulca seçilir. Seçimden sonraki ilk toplantısında başkan, başkan yardımcısı, sekreter, sayman ve üye olarak görev bölüşümü yapar.",
-"org.c3t":"Denetim Kurulu","org.c3d":"Üç asıl ve üç yedek üye olarak genel kurulca seçilir. Derneğin amaç doğrultusunda faaliyet gösterip göstermediğini ve kayıtların mevzuata uygunluğunu denetler.",
-"org.c4t":"Disiplin Kurulu","org.c4d":"Üç asıl ve üç yedek üye olarak genel kurulca seçilir. Yönetim kurulu tarafından sevk edilen üyelere ilişkin süreçleri yürütür.",
+"org.c2t":"Yönetim Kurulu","org.c2d":"Genel kurulca seçilen beş asıl üyeden oluşur. Seçimden sonraki ilk toplantısında başkan, başkan yardımcısı, sekreter, sayman ve üye olarak görev bölüşümü yapar.",
+"org.c3t":"Denetim Kurulu","org.c3d":"Genel kurulca seçilen üç asıl üyeden oluşur. Derneğin amaç doğrultusunda faaliyet gösterip göstermediğini ve kayıtların mevzuata uygunluğunu denetler.",
+"org.c4t":"Disiplin Kurulu","org.c4d":"Genel kurulca seçilen üç asıl üyeden oluşur. Yönetim kurulu tarafından sevk edilen üyelere ilişkin süreçleri yürütür.",
 
 "team.eyebrow":"Ekip","team.title":"Yönetim Kurulu","team.more":"Profili Gör →","team.close":"Kapat",
 "team.r.anil":"Başkan","team.r.doruk":"Başkan Yardımcısı","team.r.baran":"Sayman","team.r.ecem":"Sekreter","team.r.eren":"Kurucu Üye",
@@ -169,9 +169,9 @@ en: {
 
 "org.eyebrow":"Governance","org.title":"Association Bodies",
 "org.c1t":"General Assembly","org.c1d":"The highest decision-making body of the association, made up of its registered members. Elections, the approval of the budget and key decisions are made here.",
-"org.c2t":"Board of Directors","org.c2d":"Elected by the general assembly as five full and five substitute members. At its first meeting it assigns the roles of president, vice president, secretary, treasurer and member.",
-"org.c3t":"Supervisory Board","org.c3d":"Elected by the general assembly as three full and three substitute members. It audits whether the association acts in line with its purpose and whether records comply with legislation.",
-"org.c4t":"Disciplinary Board","org.c4d":"Elected by the general assembly as three full and three substitute members. It handles the processes concerning members referred by the board of directors.",
+"org.c2t":"Board of Directors","org.c2d":"Composed of five members elected by the General Assembly. At its first meeting it assigns the roles of president, vice president, secretary, treasurer and member.",
+"org.c3t":"Supervisory Board","org.c3d":"Composed of three members elected by the General Assembly. It audits whether the association acts in line with its purpose and whether records comply with legislation.",
+"org.c4t":"Disciplinary Board","org.c4d":"Composed of three members elected by the General Assembly. It handles the processes concerning members referred by the board of directors.",
 
 "team.eyebrow":"Team","team.title":"Board of Directors","team.more":"View Profile →","team.close":"Close",
 "team.r.anil":"President","team.r.doruk":"Vice President","team.r.baran":"Treasurer","team.r.ecem":"Secretary","team.r.eren":"Founding Member",
