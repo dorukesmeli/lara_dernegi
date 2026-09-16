@@ -11,6 +11,16 @@
 
   if (year) year.textContent = new Date().getFullYear();
 
+  /* ================= ANALİTİK ================= */
+  /* Gönderim ve kişisel veri filtresi analytics.js'de; burada yalnızca olay adı ve sabit değerler verilir.
+     analytics.js yüklenmemişse hiçbir şey yapmaz. */
+  function izle(name, params) {
+    try { if (window.LaraAnalytics) window.LaraAnalytics.track(name, params); } catch (e) {}
+  }
+  function izlemeKonumu(el) {
+    try { return window.LaraAnalytics ? window.LaraAnalytics.locationOf(el) : undefined; } catch (e) { return undefined; }
+  }
+
   /* ================= DİL (TR / EN) ================= */
   var DICT = window.I18N || { tr: {}, en: {} };
   var STORE_KEY = 'lara-lang';
@@ -70,7 +80,11 @@
   } catch (e) {}
 
   document.querySelectorAll('[data-set-lang]').forEach(function (b) {
-    b.addEventListener('click', function () { applyLang(b.getAttribute('data-set-lang')); });
+    b.addEventListener('click', function () {
+      var onceki = lang;
+      applyLang(b.getAttribute('data-set-lang'));
+      if (onceki !== lang) izle('language_change', { from_language: onceki, to_language: lang });
+    });
   });
 
   /* ================= BİYOGRAFİ PENCERESİ ================= */
@@ -109,6 +123,8 @@
     document.body.classList.add('modal-open');
     var closeBtn = modal.querySelector('.modal-close');
     if (closeBtn) closeBtn.focus();
+    var kart = document.querySelector('.person[data-bio="' + id + '"]');
+    if (kart) izle('team_profile_open', { role: kart.getAttribute('data-track-role') });
   }
 
   function closeBio() {
@@ -151,6 +167,7 @@
   var formOpenedAt = 0;       // form açılır açılmaz gelen gönderimler kısa süre bekletilir
   var turnstileReady = false;
   var submissionId = null;    // aynı başvurunun yeniden denemelerinde aynı kalır (sunucuda tekrar koruması)
+  var basariIzlendi = {};     // başarı olayı her başvuru kimliği için yalnızca bir kez gönderilir
 
   function yeniBasvuruKimligi() {
     if (window.crypto && typeof window.crypto.randomUUID === 'function') return window.crypto.randomUUID();
@@ -207,7 +224,7 @@
     return input;
   }
 
-  function openJoin() {
+  function openJoin(e) {
     formOpenedAt = Date.now();
     initTurnstile();
     lastFocus = document.activeElement;
@@ -215,6 +232,7 @@
     document.body.classList.add('modal-open');
     var c = joinModal.querySelector('.modal-close');
     if (c) c.focus();
+    izle('membership_form_open', { language: lang, trigger_location: izlemeKonumu(e && e.currentTarget) });
   }
 
   function closeJoin() {
@@ -323,6 +341,15 @@
     if (window.turnstile && CFG.turnstileSiteKey) { try { window.turnstile.reset(); } catch (e) {} }
   }
 
+  /* Analitik: sunucunun hata kodu → izin verilen hata türü */
+  function hataTuru(res) {
+    var map = { VALIDATION: 'validation', CONFIRMATION_FAILED: 'confirmation_failed', INTERNAL_NOTIFICATION_FAILED: 'internal_notification_failed' };
+    return (res && map[res.error]) || 'unknown';
+  }
+  function basvuruHatasi(tur) {
+    izle('membership_application_error', { language: lang, error_type: tur });
+  }
+
   joinForm.addEventListener('submit', function (e) {
     e.preventDefault();
     if (sending) return;                       // çift tıklama koruması
@@ -332,15 +359,15 @@
     var honey = joinForm.querySelector('input[name="website"]');
     if (honey && honey.value) { showSuccess(); return; }
 
-    if (!validate()) return;
+    if (!validate()) { basvuruHatasi('validation'); return; }
 
     if (CFG.turnstileSiteKey) {
       var tok = joinForm.querySelector('[name="cf-turnstile-response"]');
-      if (!tok || !tok.value) { setStatus(t('form.captchaNeeded'), 'err'); return; }
+      if (!tok || !tok.value) { setStatus(t('form.captchaNeeded'), 'err'); basvuruHatasi('unknown'); return; }
     }
 
-    if (rateLimited()) { setStatus(t('form.tooMany'), 'err'); return; }
-    if (!CFG.appsScriptUrl) { setStatus(t('form.notConfigured'), 'err'); return; }
+    if (rateLimited()) { setStatus(t('form.tooMany'), 'err'); basvuruHatasi('unknown'); return; }
+    if (!CFG.appsScriptUrl) { setStatus(t('form.notConfigured'), 'err'); basvuruHatasi('unknown'); return; }
 
     var payload = basvuruVerisi();
 
@@ -363,15 +390,24 @@
     var controller = (typeof AbortController === 'function') ? new AbortController() : null;
     var zamanAsimi = setTimeout(function () {
       if (controller) controller.abort();
-      sonuc(false);
+      sonuc(false, 'timeout');
     }, CFG.timeoutMs || 45000);
 
-    function sonuc(basarili) {
+    function sonuc(basarili, hata) {
       if (bitti) return;                       // zaman aşımından sonra gelen geç yanıtı yok say
       bitti = true;
       clearTimeout(zamanAsimi);
-      if (basarili) { markSubmitted(); showSuccess(); }
-      else gonderimBasarisiz();
+      if (basarili) {
+        markSubmitted();
+        showSuccess();
+        if (!basariIzlendi[payload.submissionId]) {
+          basariIzlendi[payload.submissionId] = true;
+          izle('membership_application_success', { language: payload.lang, submission_id: payload.submissionId });
+        }
+      } else {
+        gonderimBasarisiz();
+        izle('membership_application_error', { language: payload.lang, error_type: hata || 'unknown' });
+      }
     }
 
     fetch(CFG.appsScriptUrl, {
@@ -382,9 +418,14 @@
       cache: 'no-store',
       signal: controller ? controller.signal : undefined
     })
-      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-      .then(function (res) { sonuc(sunucuBasarili(res)); })
-      .catch(function () { sonuc(false); });
+      .then(function (r) {
+        if (!r.ok) { sonuc(false, 'network'); return; }
+        return r.json().then(
+          function (res) { var basarili = sunucuBasarili(res); sonuc(basarili, basarili ? null : hataTuru(res)); },
+          function () { sonuc(false, 'unknown'); }
+        );
+      })
+      .catch(function () { sonuc(false, 'network'); });
   }
 
   /* ================= MOBİL MENÜ ================= */
