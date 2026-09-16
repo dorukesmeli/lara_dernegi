@@ -194,7 +194,7 @@ function handleSubmission_(raw, deps) {
       age: ageOf_(d.birthDate, deps)
     };
     const notice = buildNotification_(d, meta);
-    const confirm = buildConfirmation_(d);
+    const confirm = buildConfirmation_(d, meta);
 
     if (deps.dryRun) {
       console.log('KURU ÇALIŞMA — mail gönderilmedi.\n\n' +
@@ -456,7 +456,7 @@ function buildNotification_(d, meta) {
   };
 }
 
-function buildConfirmation_(d) {
+function buildConfirmation_(d, meta) {
   const first = firstName_(d.fullName);
   const t = d.lang === 'en'
     ? {
@@ -464,7 +464,7 @@ function buildConfirmation_(d) {
         greeting: 'Hello ' + first + ',',
         lines: [
           'Your membership application to LARA Association has been received successfully.',
-          'Your application will be reviewed by our board, and we will contact you by email once the review is complete.',
+          'Your application will be reviewed by our board, and we will contact you by email once the evaluation is complete.',
           'Thank you for your interest.'
         ],
         org: 'LARA Association'
@@ -489,6 +489,7 @@ function buildConfirmation_(d) {
   const html =
     '<div style="background:#F1F6F8;padding:24px 12px;font-family:Arial,Helvetica,sans-serif;">' +
       '<div style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #E1E9EF;border-radius:14px;padding:32px 28px;">' +
+        gizliReferans_(meta) +
         '<p style="' + p + '">' + escapeHtml_(t.greeting) + '</p>' +
         t.lines.map(function (l) { return '<p style="' + p + '">' + escapeHtml_(l) + '</p>'; }).join('') +
         '<div style="margin-top:26px;padding-top:18px;border-top:1px solid #E1E9EF;font-size:14px;line-height:1.6;">' +
@@ -504,6 +505,17 @@ function buildConfirmation_(d) {
 
 
 /* ============================ YARDIMCILAR ============================ */
+
+/** Okunmayan, yalnızca teyit mailini benzersizleştiren referans.
+    Gövde her seferinde birebir aynı olduğunda Gmail tekrar eden kısmı "..." arkasına
+    gizliyor; bu satır her maili farklı kılarak o gizlemeyi engeller.
+    Görünen içeriği değiştirmez. */
+function gizliReferans_(meta) {
+  if (!meta || !meta.submissionId) return '';
+  const ref = meta.submissionId + ' · ' + (meta.receivedAt || '');
+  return '<span style="display:none !important;font-size:0;line-height:0;max-height:0;' +
+    'opacity:0;color:transparent;visibility:hidden;">' + escapeHtml_(ref) + '</span>';
+}
 
 function escapeHtml_(s) {
   return String(s)
@@ -595,16 +607,25 @@ function testGercekGonderim() {
   console.log('Sonuç: ' + JSON.stringify(handleSubmission_(ornek)));
 }
 
-/** GERÇEK MAİL GÖNDERİR — teyit maili TEST_TEYIT_ADRESI'ne gider (canlıdaki gerçek yol). */
+/** GERÇEK MAİL GÖNDERİR — Türkçe teyit maili TEST_TEYIT_ADRESI'ne gider (canlıdaki gerçek yol). */
 function testHariciTeyit() {
+  hariciTeyitGonder_('tr');
+}
+
+/** GERÇEK MAİL GÖNDERİR — İngilizce teyit maili TEST_TEYIT_ADRESI'ne gider. */
+function testHariciTeyitEN() {
+  hariciTeyitGonder_('en');
+}
+
+function hariciTeyitGonder_(lang) {
   if (!TEST_TEYIT_ADRESI) {
     console.log('Önce dosyadaki TEST_TEYIT_ADRESI sabitine bir test adresi yaz (yalnızca editörde).');
     return;
   }
-  const ornek = ornekBasvuru_('tr', 'harici-' + Date.now());
+  const ornek = ornekBasvuru_(lang, 'harici-' + lang + '-' + Date.now());
   ornek.email = TEST_TEYIT_ADRESI;
-  ornek.motivation = 'Harici teyit testi ' + new Date().toISOString();
-  console.log('Sonuç: ' + JSON.stringify(handleSubmission_(ornek)));
+  ornek.motivation = 'Harici teyit testi (' + lang + ') ' + new Date().toISOString();
+  console.log('Sonuç (' + lang + '): ' + JSON.stringify(handleSubmission_(ornek)));
 }
 
 /** Mail GÖNDERMEZ. Kalan günlük mail kotasını yazar. */
