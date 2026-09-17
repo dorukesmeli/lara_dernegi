@@ -79,6 +79,21 @@
     else if ((navigator.language || '').slice(0, 2).toLowerCase() !== 'tr') startLang = 'en';
   } catch (e) {}
 
+  /* Menü etiketleri dil değişince genişlik değiştirmesin (header kaymasın): her bağlantı iki dildeki
+     etiketi görünmez bir CSS katmanında taşır ve en uzun etiket kadar yer ayırır. Sayfa metnine eklenmez. */
+  function sadeMetin(html) {
+    var d = document.createElement('div');
+    d.innerHTML = html || '';
+    return d.textContent || '';
+  }
+  nav.querySelectorAll('a[data-i18n]').forEach(function (el) {
+    var key = el.getAttribute('data-i18n');
+    if (!DICT.tr || !DICT.en || DICT.tr[key] === undefined || DICT.en[key] === undefined) return;
+    el.setAttribute('data-w-tr', sadeMetin(DICT.tr[key]));
+    el.setAttribute('data-w-en', sadeMetin(DICT.en[key]));
+    el.classList.add('i18n-stable');
+  });
+
   document.querySelectorAll('[data-set-lang]').forEach(function (b) {
     b.addEventListener('click', function () {
       var onceki = lang;
@@ -457,7 +472,7 @@
   /* ================= SCROLL DAVRANIŞLARI ================= */
   function onScroll() {
     var y = window.scrollY || window.pageYOffset;
-    header.classList.toggle('scrolled', y > 8);
+    header.classList.toggle('scrolled', y > 16);
     if (toTop) toTop.classList.toggle('show', y > 600);
   }
   window.addEventListener('scroll', onScroll, { passive: true });
@@ -480,19 +495,51 @@
     sections.forEach(function (s) { spy.observe(s); });
   }
 
-  var reveals = document.querySelectorAll('.reveal');
-  if ('IntersectionObserver' in window && reveals.length) {
-    var io = new IntersectionObserver(function (entries, obs) {
-      entries.forEach(function (entry, i) {
-        if (!entry.isIntersecting) return;
-        var el = entry.target;
-        setTimeout(function () { el.classList.add('visible'); }, Math.min(i * 70, 350));
-        obs.unobserve(el);
+  /* ================= HAREKET SİSTEMİ ================= */
+  /* Bölümler görünüme girerken tek bir sistemle belirir (CSS: [data-motion]):
+     rise  — kısa yukarı kayma + belirme (bölüm üst başlığı, giriş metni, kartlar)
+     mask  — bölüm başlığının alttan açılması
+     slide — soldan kısa kayma (ilkeler ve adımlar gibi listeler)
+     scale — çok hafif büyüyerek belirme (öne çıkan kart)
+     Aynı anda görünüme giren öğeler sırayla (70 ms arayla) gelir. Hareket bitince özellik
+     kaldırılır; öğe kendi stiline döner. Hareket azaltma tercihinde hiç uygulanmaz. */
+  var hareketAzalt = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  var hareketliler = [];
+
+  function hareketEkle(el, tur) {
+    if (!el || el.hasAttribute('data-motion')) return;
+    el.setAttribute('data-motion', tur);
+    hareketliler.push(el);
+  }
+
+  if (!hareketAzalt && 'IntersectionObserver' in window) {
+    document.querySelectorAll('main .section').forEach(function (sec) {
+      hareketEkle(sec.querySelector('.section-eyebrow'), 'rise');
+      hareketEkle(sec.querySelector('.section-title'), 'mask');
+      sec.querySelectorAll('.section-intro, .join-lead').forEach(function (el) { hareketEkle(el, 'rise'); });
+    });
+    document.querySelectorAll('.principle-list li, .steps li').forEach(function (el) { hareketEkle(el, 'slide'); });
+    hareketEkle(document.querySelector('.join-card'), 'scale');
+    document.querySelectorAll('.reveal').forEach(function (el) { hareketEkle(el, 'rise'); });
+
+    var hareketGozlem = new IntersectionObserver(function (entries) {
+      var gelenler = entries
+        .filter(function (entry) { return entry.isIntersecting; })
+        .map(function (entry) { return entry.target; })
+        .sort(function (a, b) { return (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) ? -1 : 1; });
+      gelenler.forEach(function (el, sira) {
+        hareketGozlem.unobserve(el);
+        var gecikme = Math.min(sira, 6) * 70;
+        el.style.setProperty('--motion-delay', gecikme + 'ms');
+        el.classList.add('is-in');
+        setTimeout(function () {
+          el.removeAttribute('data-motion');
+          el.classList.remove('is-in');
+          el.style.removeProperty('--motion-delay');
+        }, gecikme + 950);
       });
     }, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
-    Array.prototype.forEach.call(reveals, function (el) { io.observe(el); });
-  } else {
-    Array.prototype.forEach.call(reveals, function (el) { el.classList.add('visible'); });
+    hareketliler.forEach(function (el) { hareketGozlem.observe(el); });
   }
 
   /* henüz doldurulmamış bağlantılar sayfayı zıplatmasın */

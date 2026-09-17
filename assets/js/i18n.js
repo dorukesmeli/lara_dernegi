@@ -12,7 +12,7 @@ tr: {
 "a11y.menu":"Menüyü aç","a11y.menuClose":"Menüyü kapat","a11y.top":"Yukarı çık","a11y.lang":"Dil seçimi","a11y.skip":"İçeriğe geç",
 
 "hero.title":"Gençler İçin <span class=\"hl-teal\">Öğrenme</span>,<br class=\"br-desk\"> <span class=\"hl-orange\">Eylem</span> ve <span class=\"hl-teal\">Fırsat</span> Alanı",
-"hero.lead":"LARA Derneği; gençlerin bedensel, zihinsel, ruhsal ve sosyal gelişimlerini desteklemek, gençlik çalışmaları ve uluslararası hareketlilik projeleri aracılığıyla farkındalıklarını artırmak, farklı kültürler arasında hoşgörü, dayanışma ve işbirliğini geliştirmek amacıyla kuruldu.",
+"hero.lead":"Gençlik çalışmaları ve uluslararası hareketlilik projeleriyle gençlerin gelişimini destekliyor; kültürler arasında hoşgörü, dayanışma ve işbirliğini güçlendiriyoruz.",
 "hero.cta1":"Üye Ol","hero.cta2":"Ne Yapıyoruz?",
 "hero.b1t":"Erasmus+","hero.b1s":"Gençlik Projeleri",
 "hero.b2t":"Avrupa Dayanışma Programı","hero.b2s":"Uluslararası Hareketlilik",
@@ -20,6 +20,7 @@ tr: {
 
 "about.eyebrow":"Biz Kimiz",
 "about.title":"Adımız Amacımızı Anlatıyor: <span class=\"c-navy\">L</span>earning · <span class=\"c-teal\">A</span>ction · <span class=\"c-navy\">R</span>ights · <span class=\"c-orange\">A</span>ccess",
+"about.intro2":"LARA Derneği; gençlerin bedensel, zihinsel, ruhsal ve sosyal gelişimlerini desteklemek, gençlik çalışmaları ve uluslararası hareketlilik projeleri aracılığıyla farkındalıklarını artırmak, farklı kültürler arasında hoşgörü, dayanışma ve işbirliğini geliştirmek amacıyla kuruldu.",
 "about.intro":"LARA Derneği, merkezi Antalya'da bulunan bir gençlik derneğidir. Derneğin adının kısaltması <strong>L.A.R.A.</strong> — <em>Learning, Action, Rights, Access</em> kelimelerinden gelir. Dernek sosyal, kültürel, sanatsal ve eğitsel alanlarda yurt içinde ve yurt dışında faaliyet gösterir.",
 "about.c1t":"Learning — Öğrenme","about.c1d":"Kurs, seminer, konferans ve panel gibi eğitim çalışmaları düzenlemek; hibe programları kapsamında eğitimler vermek ve almak.",
 "about.c2t":"Action — Eylem","about.c2d":"Gençlik çalışmaları ve uluslararası hareketlilik projeleriyle gençleri harekete geçirmek; sosyal, kültürel ve sanatsal etkinlikler üretmek.",
@@ -135,7 +136,7 @@ en: {
 "a11y.menu":"Open menu","a11y.menuClose":"Close menu","a11y.top":"Back to top","a11y.lang":"Language selection","a11y.skip":"Skip to content",
 
 "hero.title":"<span class=\"hl-teal\">Learning</span>, <span class=\"hl-orange\">Action</span> and <span class=\"hl-teal\">Opportunity</span><br class=\"br-desk\"> for Young People",
-"hero.lead":"LARA Association was founded to support the physical, mental, emotional and social development of young people, to raise their awareness through youth work and international mobility projects, and to foster tolerance, solidarity and cooperation between different cultures.",
+"hero.lead":"Through youth work and international mobility projects, we support young people’s development and strengthen tolerance, solidarity and cooperation between cultures.",
 "hero.cta1":"Join Us","hero.cta2":"What We Do",
 "hero.b1t":"Erasmus+","hero.b1s":"Youth Projects",
 "hero.b2t":"European Solidarity Corps","hero.b2s":"International Mobility",
@@ -143,6 +144,7 @@ en: {
 
 "about.eyebrow":"About Us",
 "about.title":"Our Name Tells Our Purpose: <span class=\"c-navy\">L</span>earning · <span class=\"c-teal\">A</span>ction · <span class=\"c-navy\">R</span>ights · <span class=\"c-orange\">A</span>ccess",
+"about.intro2":"LARA Association was founded to support the physical, mental, emotional and social development of young people, to raise their awareness through youth work and international mobility projects, and to foster tolerance, solidarity and cooperation between different cultures.",
 "about.intro":"LARA Association is a youth association headquartered in Antalya, Türkiye. Its name is the abbreviation <strong>L.A.R.A.</strong> — <em>Learning, Action, Rights, Access</em>. The association works in the social, cultural, artistic and educational fields, both in Türkiye and abroad.",
 "about.c1t":"Learning","about.c1d":"Organising educational activities such as courses, seminars, conferences and panels; providing and receiving training within grant programmes.",
 "about.c2t":"Action","about.c2d":"Mobilising young people through youth work and international mobility projects; creating social, cultural and artistic activities.",
