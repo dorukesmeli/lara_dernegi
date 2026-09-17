@@ -331,28 +331,44 @@ main p a:not(.btn):hover,.notice a:hover,.info-list a:hover,.contact-links a:hov
 .quote-card blockquote{margin:0;font-size:1.08rem;color:var(--navy);font-style:italic;line-height:1.8}
 .quote-card figcaption{margin-top:1rem;font-size:.85rem;font-weight:600;color:var(--muted);letter-spacing:.04em}
 
-/* LARA kartları */
-.lara-card{position:relative;padding-top:2.6rem;overflow:hidden}
-.lara-letter{
-  position:absolute;top:-.4rem;right:.6rem;font-family:var(--font-head);font-weight:700;
-  font-size:5.2rem;line-height:1;opacity:.13;
+/* ---------- BİZ KİMİZ: LARA harfleri ---------- */
+/* Başlık iki kontrollü satır: "Adımız Amacımızı Anlatıyor:" / "Learning · Action · Rights · Access".
+   Dar ekranda yalnızca iki kelime çifti arasında kırılır; tek kelime satıra düşmez. */
+.about-title{max-width:none}
+.lara-words{display:block}
+.lara-words .nw{white-space:nowrap}
+.about-intro{max-width:66ch}
+.about-intro .section-intro:last-child{margin-bottom:0}
+
+.lara-letters{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+  margin-top:clamp(2.8rem,5vw,4rem);border-top:1px solid var(--line);
 }
-.lara-card::before{content:"";position:absolute;top:0;left:0;width:100%;height:5px}
 .l-learning{--lara-tone:var(--navy)}
 .l-action{--lara-tone:var(--teal)}
 .l-rights{--lara-tone:var(--navy)}
 .l-access{--lara-tone:var(--orange)}
-.lara-card::before{background:var(--lara-tone)}
-.lara-card .lara-letter{color:var(--lara-tone)}
-
-/* faaliyet kartları */
-.feature-icon{
-  width:52px;height:52px;border-radius:14px;display:grid;place-items:center;margin-bottom:1.1rem;
+.lara-item{position:relative;padding:clamp(1.6rem,2.4vw,2.2rem) clamp(1.1rem,2vw,1.8rem) 0}
+.lara-item:first-child{padding-left:0}
+.lara-item:last-child{padding-right:0}
+.lara-item + .lara-item{border-left:1px solid var(--line)}
+.lara-glyph{display:block;overflow:hidden;line-height:.86;padding-bottom:.04em}
+.lara-glyph-in{
+  display:block;font-family:var(--font-head);font-weight:700;letter-spacing:-.04em;
+  font-size:clamp(4.6rem,8.4vw,7.6rem);color:var(--lara-tone);
 }
-.feature-icon svg{width:26px;height:26px}
-.icon-navy{background:#E9F0F9;color:var(--navy)}
-.icon-teal{background:var(--teal-soft);color:var(--teal-dark)}
-.icon-orange{background:var(--orange-soft);color:var(--orange-dark)}
+.lara-rule{display:block;width:36px;height:3px;border-radius:3px;background:var(--lara-tone);margin:1.1rem 0 1.15rem;transform-origin:left}
+.lara-item h3{font-size:1.1rem;margin-bottom:.45rem}
+.lara-item p{font-size:.95rem;line-height:1.66;margin:0}
+
+/* harfler sırayla alttan yükselir, ardından çizgi uzar */
+.js [data-motion="letter"] .lara-glyph-in{transition:transform 1s var(--ease) var(--motion-delay,0ms)}
+.js [data-motion="letter"] .lara-rule{transition:transform .8s var(--ease) calc(var(--motion-delay,0ms) + .35s)}
+.js [data-motion="letter"]:not(.is-in) .lara-glyph-in{transform:translate3d(0,104%,0)}
+.js [data-motion="letter"]:not(.is-in) .lara-rule{transform:scaleX(0)}
+.js .lara-item[data-motion="letter"]:not(.is-in){opacity:1}
+.js [data-motion="letter"] > h3,.js [data-motion="letter"] > p{transition:opacity .7s var(--ease) calc(var(--motion-delay,0ms) + .2s),transform .7s var(--ease) calc(var(--motion-delay,0ms) + .2s)}
+.js [data-motion="letter"]:not(.is-in) > h3,.js [data-motion="letter"]:not(.is-in) > p{opacity:0;transform:translate3d(0,10px,0)}
 
 
 /* ---------- AMAÇLARIMIZ ---------- */
@@ -380,19 +396,72 @@ main p a:not(.btn):hover,.notice a:hover,.info-list a:hover,.contact-links a:hov
 }
 .goal-body p{margin:0;font-size:.94rem;line-height:1.68;color:var(--body)}
 
-/* ---------- İLKELER ---------- */
+/* ---------- FAALİYET ALANLARI: yapışkan başlık + numaralı liste ---------- */
+.work-split{display:grid;grid-template-columns:minmax(0,.78fr) minmax(0,1.62fr);gap:clamp(2rem,5vw,5.5rem);align-items:start}
+.work-aside{align-self:stretch}                 /* yapışkan başlık liste boyunca kalsın */
+.work-sticky{position:sticky;top:calc(var(--header-h-compact) + 2.5rem)}
+.work-sticky .section-title{margin-bottom:2rem}
+.work-progress{display:flex;flex-direction:column;gap:.9rem;max-width:220px}
+.work-count{display:flex;align-items:baseline;gap:.45rem;font-family:var(--font-head);font-variant-numeric:tabular-nums}
+.work-current{font-size:clamp(2.6rem,4vw,3.4rem);font-weight:600;line-height:1;letter-spacing:-.03em;color:var(--teal)}
+.work-current.is-changing{animation:countIn .45s var(--ease)}
+.work-total{font-size:1rem;font-weight:600;color:var(--muted)}
+.work-track{position:relative;display:block;height:2px;border-radius:2px;background:var(--line);overflow:hidden}
+.work-bar{position:absolute;inset:0;background:linear-gradient(90deg,var(--teal),var(--orange));transform:scaleX(var(--work-progress,0));transform-origin:left;transition:transform .2s linear}
+@keyframes countIn{from{opacity:0;transform:translate3d(0,.25em,0)}to{opacity:1;transform:none}}
+
+.work-list{display:block}
+.work-item{
+  position:relative;display:grid;grid-template-columns:3.1rem minmax(0,.92fr) minmax(0,1.08fr);
+  column-gap:clamp(1rem,2vw,2rem);align-items:start;padding:clamp(1.5rem,2.4vw,2rem) 0;
+}
+.work-item::before{
+  content:"";position:absolute;left:0;right:0;top:0;height:1px;background:var(--line);transform-origin:left;
+}
+.work-item:last-child{border-bottom:1px solid var(--line)}
+.work-num{
+  font-family:var(--font-head);font-size:.9rem;font-weight:600;color:#A9B6C4;padding-top:.7rem;
+  font-variant-numeric:tabular-nums;transition:color var(--t-ui) var(--ease);
+}
+.work-head{display:flex;align-items:center;gap:.95rem;min-width:0}
+.work-icon{
+  flex:none;width:48px;height:48px;border-radius:14px;display:grid;place-items:center;
+  background:var(--tint);color:var(--tone);
+  transition:background-color var(--t-ui) var(--ease),color var(--t-ui) var(--ease),transform var(--t-ui) var(--ease);
+}
+.work-icon svg{width:23px;height:23px}
+.work-item h3{font-size:1.14rem;margin:0}
+.work-item p{margin:.2rem 0 0;font-size:.97rem;line-height:1.7}
+/* ekranın ortasındaki satır vurgulanır (main.js) */
+.work-item.is-active .work-num{color:var(--tone)}
+.work-item.is-active .work-icon{background:var(--tone);color:#fff}
+.js .work-item[data-motion]::before{transition:transform 1s var(--ease) var(--motion-delay,0ms)}
+.js .work-item[data-motion]:not(.is-in)::before{transform:scaleX(0)}
+
+/* ---------- İLKELER: manifesto ---------- */
 .principles{background:var(--bg-warm)}
-.principles-grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:3rem;align-items:start}
-.principle-list{display:grid;grid-template-columns:repeat(2,1fr);gap:.8rem}
-.principle-list li{
-  display:flex;align-items:center;gap:.85rem;background:#fff;border:1px solid var(--line);
-  border-radius:14px;padding:.9rem 1.1rem;font-weight:500;color:var(--navy);font-size:.97rem;
+.principles .section-title{margin-bottom:clamp(1.8rem,3vw,2.6rem)}
+.manifesto{
+  display:block;max-width:1060px;
+  font-family:var(--font-head);font-weight:600;color:var(--navy);
+  font-size:clamp(1.5rem,3.2vw,2.8rem);line-height:1.36;letter-spacing:-.024em;
 }
-.principle-list .num{
-  font-family:var(--font-head);font-size:.78rem;font-weight:700;color:var(--teal-dark);
-  background:var(--teal-soft);border-radius:8px;padding:.28rem .5rem;flex:none;
+.manifesto{text-wrap:balance}
+.manifesto li{display:inline;white-space:nowrap;transition:color .5s var(--ease)}   /* numara ilkesinden ayrılmasın */
+.manifesto li:not(:last-child)::after{
+  content:"";display:inline-block;width:.16em;height:.16em;border-radius:50%;background:var(--orange);
+  margin:0 .42em 0 .38em;vertical-align:.2em;transition:opacity .5s var(--ease);
 }
-.principle-list li:nth-child(3n) .num{color:var(--orange-dark);background:var(--orange-soft)}
+.m-num{
+  display:inline-block;font-size:.34em;font-weight:600;letter-spacing:.04em;color:var(--teal-dark);
+  vertical-align:1.55em;margin-right:.32em;font-variant-numeric:tabular-nums;transition:opacity .5s var(--ease);
+}
+.manifesto li:nth-child(3n) .m-num{color:var(--orange-dark)}
+/* kaydırdıkça kelimeler sırayla koyulaşır (main.js "is-live" / "is-lit" ekler) */
+.manifesto.is-live li{color:rgba(11,45,82,.17)}
+.manifesto.is-live li .m-num,.manifesto.is-live li::after{opacity:.3}
+.manifesto.is-live li.is-lit{color:var(--navy)}
+.manifesto.is-live li.is-lit .m-num,.manifesto.is-live li.is-lit::after{opacity:1}
 
 /* ---------- PROJELER ---------- */
 .project{display:flex;flex-direction:column}
@@ -412,9 +481,57 @@ main p a:not(.btn):hover,.notice a:hover,.info-list a:hover,.contact-links a:hov
 .notice a{color:var(--teal);font-weight:600;white-space:nowrap}
 .notice a:hover{color:var(--orange)}
 
+/* ---------- DERNEK ORGANLARI: yapı şeması ---------- */
+.org-chart{--org-line:#C7D5E1;--org-gap:clamp(1rem,2vw,1.6rem);position:relative;margin-top:clamp(2.4rem,4vw,3.2rem)}
+.org-node{
+  position:relative;background:#fff;border:1px solid var(--line);border-radius:var(--radius);
+  padding:clamp(1.3rem,2vw,1.7rem);box-shadow:var(--shadow-sm);
+}
+.org-node h3{font-size:1.1rem;margin-bottom:.45rem}
+.org-node p{font-size:.95rem;line-height:1.66;margin:0}
+.org-root{
+  max-width:640px;margin:0 auto;text-align:center;
+  background:linear-gradient(160deg,var(--navy) 0%,#13436F 100%);border-color:transparent;color:#C9D8E8;
+  box-shadow:0 22px 44px -26px rgba(11,45,82,.55);
+}
+.org-root h3{color:#fff;font-size:1.25rem}
+.org-root p{color:#C9D8E8}
+.org-connector{position:relative;display:block;height:clamp(2.2rem,3.4vw,2.8rem)}
+.org-stem{position:absolute;left:50%;top:0;width:1.5px;height:100%;margin-left:-.75px;background:var(--org-line);transform-origin:top}
+.org-rail{
+  position:absolute;bottom:0;height:1.5px;background:var(--org-line);
+  left:calc((100% - 2 * var(--org-gap)) / 6);right:calc((100% - 2 * var(--org-gap)) / 6);
+}
+.org-rail::before,.org-rail::after{
+  content:"";position:absolute;top:50%;width:7px;height:7px;margin-top:-3.5px;border-radius:50%;background:var(--teal);
+}
+.org-rail::before{left:-3px}
+.org-rail::after{right:-3px}
+.org-children{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--org-gap);padding-top:clamp(1.4rem,2.2vw,1.8rem)}
+.org-children .org-node::before{
+  content:"";position:absolute;left:50%;bottom:100%;width:1.5px;margin-left:-.75px;
+  height:calc(clamp(1.4rem,2.2vw,1.8rem) + 1px);background:var(--org-line);
+}
+/* çizgiler çizilerek belirir */
+.js .org-connector[data-motion] .org-stem{transition:transform .6s var(--ease) var(--motion-delay,0ms)}
+.js .org-connector[data-motion] .org-rail{transition:transform .8s var(--ease) calc(var(--motion-delay,0ms) + .4s)}
+.js .org-connector[data-motion]:not(.is-in) .org-stem{transform:scaleY(0)}
+.js .org-connector[data-motion]:not(.is-in) .org-rail{transform:scaleX(0)}
+
 /* ---------- EKİP ---------- */
-.team-grid .person{text-align:center;padding:1.8rem 1rem}
-.team-grid .person h3{font-size:.98rem;line-height:1.35}
+.team-grid .person{
+  display:flex;flex-direction:column;align-items:center;text-align:center;
+  padding:clamp(1.5rem,2vw,1.9rem) clamp(.9rem,1.2vw,1.2rem) clamp(1.3rem,1.8vw,1.6rem);
+}
+.person-portrait{
+  --size:clamp(96px,8.4vw,116px);
+  width:var(--size);height:var(--size);flex:none;border-radius:50%;padding:4px;margin-bottom:1.1rem;
+  border:1.5px solid color-mix(in srgb,var(--tone) 32%,transparent);
+  transition:border-color var(--t-ui) var(--ease);
+}
+.person-portrait > *{width:100%;height:100%;border-radius:50%;overflow:hidden}
+.person-portrait picture{display:block}
+.person-portrait .avatar{width:100%;height:100%;margin:0;font-size:clamp(1.3rem,1.6vw,1.6rem)}
 .avatar{
   width:72px;height:72px;border-radius:50%;margin:0 auto 1rem;display:grid;place-items:center;
   font-family:var(--font-head);font-weight:600;font-size:1.35rem;color:#fff;letter-spacing:.03em;
@@ -422,13 +539,23 @@ main p a:not(.btn):hover,.notice a:hover,.info-list a:hover,.contact-links a:hov
 .av-navy{background:linear-gradient(140deg,var(--navy),var(--navy-600))}
 .av-teal{background:linear-gradient(140deg,var(--teal-dark),var(--teal))}
 .av-orange{background:linear-gradient(140deg,var(--orange-dark),var(--orange))}
-.person h3{font-size:1.02rem;margin-bottom:.25rem}
-.person .role{font-size:.9rem;color:var(--teal-dark);font-weight:600;margin:0}
-.person-photo{width:72px;height:72px;border-radius:50%;object-fit:cover;margin:0 auto 1rem;display:block}
+.person-photo{width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;transition:transform .6s var(--ease)}
+.person-meta{display:flex;flex-direction:column;align-items:center;gap:.35rem;width:100%}
+.person .role{
+  margin:0;font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--teal-dark);
+  line-height:1.4;min-height:1.4em;
+}
+.person h3{
+  margin:0;font-size:clamp(.98rem,.35vw + .82rem,1.08rem);line-height:1.3;letter-spacing:-.01em;
+  min-height:2.6em;display:flex;align-items:flex-start;justify-content:center;
+  overflow-wrap:break-word;hyphens:manual;text-wrap:balance;
+}
 .person.has-bio{cursor:pointer}
-.person.has-bio:hover{transform:translateY(-3px);box-shadow:var(--shadow);border-color:var(--teal)}
+.person.has-bio:hover{transform:translateY(-3px);box-shadow:var(--shadow);border-color:color-mix(in srgb,var(--teal) 55%,var(--line))}
+.person.has-bio:hover .person-portrait{border-color:var(--tone)}
+.person.has-bio:hover .person-photo{transform:scale(1.04)}
 .person-more{
-  margin-top:.9rem;border:0;background:transparent;cursor:pointer;padding:.2rem 0;
+  margin-top:auto;padding:.45rem .2rem 0;border:0;background:transparent;cursor:pointer;
   font-family:var(--font-head);font-size:.82rem;font-weight:600;color:var(--orange);
   transition:color var(--t-fast) ease,transform var(--t-ui) var(--ease);
 }
@@ -705,7 +832,16 @@ body.modal-open{overflow:hidden}
   .hero-badges{order:5;margin-top:0}
   .hero-mark{width:clamp(150px,24vw,200px);transform:none}
   .hero-field{width:96vw;height:62%}
-  .principles-grid,.join-grid{grid-template-columns:1fr;gap:2rem}
+  .join-grid{grid-template-columns:1fr;gap:2rem}
+  .lara-letters{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .lara-item,.lara-item:first-child,.lara-item:last-child{padding:1.8rem 1.4rem 1.8rem 0}
+  .lara-item:nth-child(even){padding-left:1.4rem;padding-right:0}
+  .lara-item:nth-child(3){border-left:0}
+  .lara-item:nth-child(n+3){border-top:1px solid var(--line)}
+  .work-split{grid-template-columns:1fr;gap:1.2rem}
+  .work-sticky{position:static}
+  .work-sticky .section-title{margin-bottom:0}
+  .work-progress{display:none}
   .contact-grid{grid-template-columns:1fr 1fr}
   .footer-inner{grid-template-columns:1fr 1fr;gap:1.6rem}
   .footer-meta{text-align:left;grid-column:1/-1;border-top:1px solid rgba(255,255,255,.12);padding-top:1.2rem}
@@ -713,6 +849,21 @@ body.modal-open{overflow:hidden}
 
 @media (max-width:800px){
   .grid-5{grid-template-columns:repeat(2,1fr)}
+}
+
+@media (max-width:760px){
+  .work-item{grid-template-columns:2.2rem minmax(0,1fr);row-gap:.7rem}
+  .work-item p{grid-column:2}
+  .work-num{padding-top:.85rem}
+  .org-chart{--org-x:1.2rem}
+  .org-root{text-align:left;max-width:none}
+  .org-connector{height:1.4rem}
+  .org-stem{left:var(--org-x)}
+  .org-rail{display:none}
+  .org-children{grid-template-columns:1fr;gap:1rem;padding:0 0 0 calc(var(--org-x) + 1.4rem)}
+  .org-children .org-node::before{left:-1.4rem;bottom:auto;top:-1rem;margin-left:-.75px;height:calc(50% + 1rem)}
+  .org-children .org-node:not(:last-child)::before{height:calc(100% + 1rem)}
+  .org-children .org-node::after{content:"";position:absolute;left:-1.4rem;top:50%;width:1.4rem;height:1.5px;background:var(--org-line)}
 }
 
 @media (max-width:900px){
@@ -754,7 +905,24 @@ body.modal-open{overflow:hidden}
   .modal-head .avatar{width:54px;height:54px;font-size:1.05rem}
   .modal-photo{width:84px;height:84px}
   .grid-3,.grid-4,.grid-5,.contact-grid{grid-template-columns:1fr}
-  .principle-list,.goal-list{grid-template-columns:1fr}
+  .goal-list{grid-template-columns:1fr}
+  .team-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .team-grid > .person:last-child:nth-child(odd){grid-column:1 / -1;justify-self:center;width:calc(50% - .55rem)}
+  .person-portrait{--size:92px}
+  .person .role{font-size:.66rem;letter-spacing:.1em}
+  .lara-letters{grid-template-columns:1fr}
+  .lara-item,.lara-item:first-child,.lara-item:last-child,.lara-item:nth-child(even){
+    display:grid;grid-template-columns:4.4rem minmax(0,1fr);column-gap:1rem;padding:1.4rem 0;border-left:0
+  }
+  .lara-item + .lara-item{border-top:1px solid var(--line)}
+  .lara-glyph{grid-row:1 / span 3}
+  .lara-glyph-in{font-size:4.2rem}
+  .lara-rule{margin:.2rem 0 .7rem}
+  .manifesto{font-size:clamp(1.35rem,6vw,1.6rem);line-height:1.3}
+  .manifesto li{display:block;white-space:normal;padding:.5rem 0;border-top:1px solid rgba(11,45,82,.08)}
+  .manifesto li:last-child{border-bottom:1px solid rgba(11,45,82,.08)}
+  .manifesto li:not(:last-child)::after{display:none}
+  .m-num{vertical-align:.9em;min-width:1.6em}
   .section-title{max-width:none}
   .brand-tagline{display:none}
   .hero-actions .btn{flex:1 1 100%}

@@ -19,7 +19,7 @@ tr: {
 "hero.b3t":"Antalya","hero.b3s":"Yurt İçi &amp; Yurt Dışı Faaliyet",
 
 "about.eyebrow":"Biz Kimiz",
-"about.title":"Adımız Amacımızı Anlatıyor: <span class=\"c-navy\">L</span>earning · <span class=\"c-teal\">A</span>ction · <span class=\"c-navy\">R</span>ights · <span class=\"c-orange\">A</span>ccess",
+"about.title":"Adımız Amacımızı Anlatıyor: <span class=\"lara-words\"><span class=\"nw\"><span class=\"c-navy\">L</span>earning · <span class=\"c-teal\">A</span>ction ·</span> <span class=\"nw\"><span class=\"c-navy\">R</span>ights · <span class=\"c-orange\">A</span>ccess</span></span>",
 "about.intro2":"LARA Derneği; gençlerin bedensel, zihinsel, ruhsal ve sosyal gelişimlerini desteklemek, gençlik çalışmaları ve uluslararası hareketlilik projeleri aracılığıyla farkındalıklarını artırmak, farklı kültürler arasında hoşgörü, dayanışma ve işbirliğini geliştirmek amacıyla kuruldu.",
 "about.intro":"LARA Derneği, merkezi Antalya'da bulunan bir gençlik derneğidir. Derneğin adının kısaltması <strong>L.A.R.A.</strong> — <em>Learning, Action, Rights, Access</em> kelimelerinden gelir. Dernek sosyal, kültürel, sanatsal ve eğitsel alanlarda yurt içinde ve yurt dışında faaliyet gösterir.",
 "about.c1t":"Learning — Öğrenme","about.c1d":"Kurs, seminer, konferans ve panel gibi eğitim çalışmaları düzenlemek; hibe programları kapsamında eğitimler vermek ve almak.",
@@ -143,7 +143,7 @@ en: {
 "hero.b3t":"Antalya","hero.b3s":"Activities in Türkiye &amp; Abroad",
 
 "about.eyebrow":"About Us",
-"about.title":"Our Name Tells Our Purpose: <span class=\"c-navy\">L</span>earning · <span class=\"c-teal\">A</span>ction · <span class=\"c-navy\">R</span>ights · <span class=\"c-orange\">A</span>ccess",
+"about.title":"Our Name Tells Our Purpose: <span class=\"lara-words\"><span class=\"nw\"><span class=\"c-navy\">L</span>earning · <span class=\"c-teal\">A</span>ction ·</span> <span class=\"nw\"><span class=\"c-navy\">R</span>ights · <span class=\"c-orange\">A</span>ccess</span></span>",
 "about.intro2":"LARA Association was founded to support the physical, mental, emotional and social development of young people, to raise their awareness through youth work and international mobility projects, and to foster tolerance, solidarity and cooperation between different cultures.",
 "about.intro":"LARA Association is a youth association headquartered in Antalya, Türkiye. Its name is the abbreviation <strong>L.A.R.A.</strong> — <em>Learning, Action, Rights, Access</em>. The association works in the social, cultural, artistic and educational fields, both in Türkiye and abroad.",
 "about.c1t":"Learning","about.c1d":"Organising educational activities such as courses, seminars, conferences and panels; providing and receiving training within grant programmes.",

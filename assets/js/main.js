@@ -149,10 +149,20 @@
     if (lastFocus && lastFocus.focus) lastFocus.focus();
   }
 
-  // kartta fotoğraf varsa baş harflerin yerine onu göster
+  // kartta fotoğraf varsa baş harflerin yerine onu göster (AVIF/WebP destekleyen tarayıcıya küçük sürüm gider)
   document.querySelectorAll('.person[data-photo]').forEach(function (card) {
     var av = card.querySelector('.avatar');
-    if (av) av.outerHTML = '<img class="person-photo" src="' + card.dataset.photo + '" alt="" loading="lazy" width="400" height="400">';
+    if (!av) return;
+    var img = '<img class="person-photo" src="' + card.dataset.photo + '" alt="" loading="lazy" decoding="async" width="400" height="400">';
+    var set = card.dataset.photoSet;
+    if (set) {
+      var sizes = '(max-width: 640px) 92px, 116px';
+      img = '<picture>' +
+        '<source type="image/avif" srcset="' + set + '-256.avif 256w, ' + set + '-400.avif 400w" sizes="' + sizes + '">' +
+        '<source type="image/webp" srcset="' + set + '-256.webp 256w, ' + set + '-400.webp 400w" sizes="' + sizes + '">' +
+        img + '</picture>';
+    }
+    av.outerHTML = img;
   });
 
   document.querySelectorAll('.person.has-bio').forEach(function (card) {
@@ -518,8 +528,11 @@
       hareketEkle(sec.querySelector('.section-title'), 'mask');
       sec.querySelectorAll('.section-intro, .join-lead').forEach(function (el) { hareketEkle(el, 'rise'); });
     });
-    document.querySelectorAll('.principle-list li, .steps li').forEach(function (el) { hareketEkle(el, 'slide'); });
+    document.querySelectorAll('.steps li').forEach(function (el) { hareketEkle(el, 'slide'); });
     hareketEkle(document.querySelector('.join-card'), 'scale');
+    document.querySelectorAll('.lara-item').forEach(function (el) { hareketEkle(el, 'letter'); el.setAttribute('data-motion-step', '140'); });
+    hareketEkle(document.querySelector('.org-root'), 'scale');
+    hareketEkle(document.querySelector('.org-connector'), 'draw');
     document.querySelectorAll('.reveal').forEach(function (el) { hareketEkle(el, 'rise'); });
 
     var hareketGozlem = new IntersectionObserver(function (entries) {
@@ -529,17 +542,68 @@
         .sort(function (a, b) { return (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) ? -1 : 1; });
       gelenler.forEach(function (el, sira) {
         hareketGozlem.unobserve(el);
-        var gecikme = Math.min(sira, 6) * 70;
+        var gecikme = Math.min(sira, 6) * (parseInt(el.getAttribute('data-motion-step'), 10) || 70);
         el.style.setProperty('--motion-delay', gecikme + 'ms');
         el.classList.add('is-in');
         setTimeout(function () {
           el.removeAttribute('data-motion');
+          el.removeAttribute('data-motion-step');
           el.classList.remove('is-in');
           el.style.removeProperty('--motion-delay');
-        }, gecikme + 950);
+        }, gecikme + 1400);
       });
     }, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
     hareketliler.forEach(function (el) { hareketGozlem.observe(el); });
+  }
+
+  /* ================= KAYDIRMAYA BAĞLI BÖLÜMLER ================= */
+  /* Faaliyet Alanları: ekranın ortasındaki satır vurgulanır, yandaki sayaç ve çubuk ilerler.
+     İlkeler: bölüm ekrana girdikçe ilkeler sırayla koyulaşır. Yalnızca sınıf ve bir CSS değişkeni
+     değişir; tarayıcı kaydırma olayını zaten kare başına en fazla bir kez gönderir. */
+  var workList    = document.querySelector('.work-list');
+  var workItems   = workList ? Array.prototype.slice.call(workList.querySelectorAll('.work-item')) : [];
+  var workCurrent = document.querySelector('.work-current');
+  var workBar     = document.querySelector('.work-progress');
+  var manifesto   = document.querySelector('.manifesto');
+  var maniItems   = manifesto ? Array.prototype.slice.call(manifesto.children) : [];
+  var aktifSatir  = -1;
+
+  if (manifesto && !hareketAzalt) manifesto.classList.add('is-live');
+
+  function kaydirmaGuncelle() {
+    var vh = window.innerHeight || document.documentElement.clientHeight;
+
+    if (workItems.length) {
+      var orta = vh * 0.5, secili = 0;
+      workItems.forEach(function (item, i) {
+        if (item.getBoundingClientRect().top <= orta) secili = i;
+      });
+      var r = workList.getBoundingClientRect();
+      var ilerleme = Math.min(1, Math.max(0, (orta - r.top) / r.height));
+      if (workBar) workBar.style.setProperty('--work-progress', ilerleme.toFixed(3));
+      if (secili !== aktifSatir) {
+        workItems.forEach(function (item, i) { item.classList.toggle('is-active', i === secili); });
+        if (workCurrent) {
+          workCurrent.textContent = (secili < 9 ? '0' : '') + (secili + 1);
+          workCurrent.classList.remove('is-changing');
+          void workCurrent.offsetWidth;          // animasyonu yeniden başlat
+          workCurrent.classList.add('is-changing');
+        }
+        aktifSatir = secili;
+      }
+    }
+
+    if (maniItems.length && !hareketAzalt) {
+      var m = manifesto.getBoundingClientRect();
+      var p = (vh * 0.85 - m.top) / (m.height + vh * 0.3);
+      var yanik = Math.ceil(Math.min(1, Math.max(0, p)) * maniItems.length);
+      maniItems.forEach(function (li, i) { li.classList.toggle('is-lit', i < yanik); });
+    }
+  }
+  if (workItems.length || maniItems.length) {
+    window.addEventListener('scroll', kaydirmaGuncelle, { passive: true });
+    window.addEventListener('resize', kaydirmaGuncelle);
+    kaydirmaGuncelle();
   }
 
   /* henüz doldurulmamış bağlantılar sayfayı zıplatmasın */
