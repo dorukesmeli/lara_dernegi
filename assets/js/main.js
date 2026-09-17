@@ -696,6 +696,41 @@
     hareketliler.forEach(function (el) { hareketGozlem.observe(el); });
   }
 
+  /* ================= HERO SEMBOLÜ GİRİŞİ ================= */
+  /* Büyük LARA sembolü ilk açılışta bir kez, renk katmanlarından oluşarak belirir (CSS: .mark-intro).
+     Katman görselleri çözülüp sembol ekrana girince başlar; bitince katmanlar kaldırılır ve
+     orijinal görsel görünür. Hareket azaltma tercihinde animasyon hiç çalışmaz. */
+  (function () {
+    var sembol = document.querySelector('.hero-mark.mark-intro');
+    if (!sembol) return;
+    var bitti = false;
+    function bitir() {
+      if (bitti) return;
+      bitti = true;
+      sembol.classList.remove('mark-intro', 'mark-armed', 'mark-go');
+    }
+    if (hareketAzalt || typeof Promise === 'undefined') { bitir(); return; }
+    sembol.classList.add('mark-armed');
+
+    var katmanlar = sembol.querySelector('.mark-layers');
+    var hazir = Promise.all(Array.prototype.map.call(sembol.querySelectorAll('.mark-part'), function (img) {
+      return img.decode ? img.decode() : Promise.resolve();
+    }));
+    var ekranda = new Promise(function (tamam) {
+      if (!('IntersectionObserver' in window)) { tamam(); return; }
+      var gozlem = new IntersectionObserver(function (entries) {
+        if (entries.some(function (e) { return e.isIntersecting; })) { gozlem.disconnect(); tamam(); }
+      }, { threshold: 0.3 });
+      gozlem.observe(sembol);
+    });
+
+    Promise.all([hazir, ekranda]).then(function () {
+      katmanlar.addEventListener('animationend', function (e) { if (e.target === katmanlar) bitir(); });
+      setTimeout(bitir, 2600);                  // animationend gelmezse güvenlik
+      sembol.classList.add('mark-go');
+    }, bitir);                                  // görsel yüklenemezse doğrudan orijinali göster
+  })();
+
   /* ================= KAYDIRMAYA BAĞLI BÖLÜMLER ================= */
   /* Faaliyet Alanları: ekranın ortasındaki satır vurgulanır, yandaki sayaç ve çubuk ilerler.
      İlkeler: bölüm ekrana girdikçe ilkeler sırayla koyulaşır. Yalnızca sınıf ve bir CSS değişkeni

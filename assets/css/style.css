@@ -286,6 +286,37 @@ main p a:not(.btn):hover,.notice a:hover,.info-list a:hover,.contact-links a:hov
 .hero-visual{position:relative;display:flex;justify-content:center;align-items:center}
 .hero-mark{position:relative;width:clamp(210px,19vw,300px);aspect-ratio:338/458}
 .hero-mark img{position:relative;z-index:1;width:100%;height:auto}
+
+/* ---------- HERO SEMBOLÜ: ilk açılışta bir kez oluşma animasyonu ----------
+   Katmanlar orijinal görselin renklerine göre piksel piksel ayrılmış parçalarıdır; son karede
+   orijinalle birebir aynıdır. main.js görseller hazır ve sembol ekrandayken "mark-go" ekler,
+   bitince "mark-intro" sınıfını kaldırır: katmanlar gizlenir, orijinal görsel görünür.
+   Yalnızca transform ve opacity animasyonlanır. */
+.hero-mark{
+  --mark-shift:22px;
+  --mark-navy-dur:.75s;
+  --mark-orange-delay:.2s;  --mark-orange-dur:.7s;
+  --mark-teal-delay:.42s;   --mark-teal-dur:.7s;
+  --mark-settle-delay:.7s;  --mark-settle-dur:.75s;
+}
+.mark-layers{position:absolute;inset:0;z-index:2;display:none;pointer-events:none;transform-origin:50% 60%}
+.hero-mark .mark-part{position:absolute;inset:0;width:100%;height:100%;max-width:none}
+.js .mark-intro .mark-layers{display:block}
+.js .mark-intro .mark-final,.js .mark-intro .mark-part{opacity:0}
+/* JavaScript hiç çalışmazsa sembol yine de 2,5 sn içinde görünür */
+.js .mark-intro:not(.mark-armed) .mark-final{animation:markShow .01s linear 2.5s forwards}
+@keyframes markShow{to{opacity:1}}
+
+.js .mark-intro.mark-go .mark-navy{animation:markNavy var(--mark-navy-dur) var(--ease) both}
+.js .mark-intro.mark-go .mark-orange{animation:markOrange var(--mark-orange-dur) var(--ease) var(--mark-orange-delay) both}
+.js .mark-intro.mark-go .mark-teal{animation:markTeal var(--mark-teal-dur) var(--ease) var(--mark-teal-delay) both}
+.js .mark-intro.mark-go .mark-layers{animation:markSettle var(--mark-settle-dur) var(--ease) var(--mark-settle-delay) both}
+
+/* 1) lacivert: sol üstten   2) turuncu: sağ üstten   3) turkuaz dalgalar: sol alttan   4) bütün: çok hafif oturma */
+@keyframes markNavy{from{opacity:0;transform:translate3d(calc(var(--mark-shift) * -1),calc(var(--mark-shift) * -.7),0)}to{opacity:1;transform:none}}
+@keyframes markOrange{from{opacity:0;transform:translate3d(var(--mark-shift),calc(var(--mark-shift) * -1),0)}to{opacity:1;transform:none}}
+@keyframes markTeal{from{opacity:0;transform:translate3d(calc(var(--mark-shift) * -.6),var(--mark-shift),0)}to{opacity:1;transform:none}}
+@keyframes markSettle{from{transform:scale(1.03)}to{transform:none}}
 .hero-cradle{
   position:absolute;z-index:0;left:-66.7%;top:-52.3%;width:416.7%;height:auto;max-width:none;overflow:visible;
 }
@@ -884,12 +915,10 @@ body.modal-open{overflow:hidden}
 /* hero: sayfa ilk açıldığında bir kez */
 @keyframes heroRise{from{opacity:0;transform:translate3d(0,16px,0)}to{opacity:1;transform:none}}
 @keyframes heroFade{from{opacity:0}to{opacity:1}}
-@keyframes markIn{from{opacity:0;transform:translate3d(0,8px,0) scale(.97)}to{opacity:1;transform:none}}
 @keyframes lineGrow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
 .js .hero h1{animation:heroRise .8s var(--ease) both}
 .js .hero .lead{animation:heroRise .8s var(--ease) .08s both}
 .js .hero-actions{animation:heroRise .8s var(--ease) .16s both}
-.js .hero-mark img{animation:markIn 1s var(--ease) .12s both}
 .js .hero-cradle{animation:heroFade 1.2s var(--ease) both}
 .js .hero-badges{animation:heroRise .8s var(--ease) .26s both}
 .js .hero-badges li + li::before{animation:lineGrow .7s var(--ease) .55s both}
@@ -1014,7 +1043,14 @@ body.modal-open{overflow:hidden}
   .brand-tagline{display:none}
   .hero-actions .btn{flex:1 1 100%}
   .hero{padding-bottom:4.5rem}
-  .hero-mark{width:140px}
+  .hero-mark{
+    width:140px;
+    --mark-shift:12px;
+    --mark-navy-dur:.55s;
+    --mark-orange-delay:.12s; --mark-orange-dur:.5s;
+    --mark-teal-delay:.24s;   --mark-teal-dur:.5s;
+    --mark-settle-delay:.4s;  --mark-settle-dur:.5s;
+  }
   .hero-field{width:130vw;height:40%}
   .hero-cradle .c-sea{display:none}          /* mobilde dekoru sadeleştir */
   .br-desk{display:none}
@@ -1030,6 +1066,8 @@ body.modal-open{overflow:hidden}
   *,*::before,*::after{animation-duration:.001ms !important;animation-delay:0s !important;transition-duration:.001ms !important;transition-delay:0s !important}
   html{scroll-behavior:auto}
   .js [data-motion]{opacity:1 !important;transform:none !important;clip-path:none !important}
+  .js .mark-intro .mark-layers{display:none}
+  .js .mark-intro .mark-final{opacity:1;animation:none}
 }
 
 @media print{

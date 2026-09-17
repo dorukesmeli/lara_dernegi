@@ -59,7 +59,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600&display=swap" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600&display=swap"></noscript>
-<link rel="stylesheet" href="assets/css/style.css?v=27">
+<link rel="stylesheet" href="assets/css/style.css?v=28">
 </head>
 <body>
 
@@ -130,13 +130,19 @@
       </ul>
     </div>
     <div class="hero-visual" aria-hidden="true">
-      <div class="hero-mark">
+      <div class="hero-mark mark-intro">
         <svg class="hero-cradle" viewBox="0 0 1000 800" focusable="false">
           <path class="c-cream" d="M58 404C150 318 262 262 392 226c150-42 306-66 460-150 58-32 106-66 148-96v610c-96 44-212 66-340 66-190 0-348-40-462-116C156 494 98 454 58 404z"/>
           <path class="c-sea"   d="M478 436c64-62 150-104 262-118 104-12 190 2 260 30v132c-86-30-190-34-292-8-86 22-162 12-230-36z"/>
           <path class="c-edge"  d="M58 404c68 96 168 162 300 196 150 38 322 36 470 4 64-14 122-34 172-58v34c-56 30-120 52-190 66-154 30-322 26-470-18C220 590 120 510 58 404z"/>
         </svg>
-        <picture><source type="image/webp" srcset="assets/img/logo-mark.webp"><img src="assets/img/logo-mark.png" alt="" width="338" height="458" fetchpriority="high" decoding="async"></picture>
+        <picture><source type="image/webp" srcset="assets/img/logo-mark.webp"><img class="mark-final" src="assets/img/logo-mark.png" alt="" width="338" height="458" fetchpriority="high" decoding="async"></picture>
+        <!-- giriş animasyonu: orijinal görselin renk katmanları (üst üste binince orijinalin aynısı) -->
+        <span class="mark-layers" aria-hidden="true">
+          <img class="mark-part mark-navy" src="assets/img/logo-parts/logo-mark-navy.webp" alt="" width="338" height="458" decoding="async">
+          <img class="mark-part mark-orange" src="assets/img/logo-parts/logo-mark-orange.webp" alt="" width="338" height="458" decoding="async">
+          <img class="mark-part mark-teal" src="assets/img/logo-parts/logo-mark-teal.webp" alt="" width="338" height="458" decoding="async">
+        </span>
       </div>
     </div>
   </div>
@@ -806,6 +812,6 @@
 <script src="assets/js/form-config.js?v=23" defer></script>
 <script src="assets/js/i18n.js?v=29" defer></script>
 <script src="assets/js/analytics.js?v=24" defer></script>
-<script src="assets/js/main.js?v=28" defer></script>
+<script src="assets/js/main.js?v=29" defer></script>
 </body>
 </html>
