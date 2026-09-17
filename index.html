@@ -46,7 +46,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/style.css?v=25">
+<link rel="stylesheet" href="assets/css/style.css?v=26">
 </head>
 <body>
 
@@ -629,7 +629,15 @@
       <h3 id="joinFormTitle" data-i18n="form.title">Üyelik Başvuru Formu</h3>
       <p class="form-intro" data-i18n="form.intro">Aşağıdaki bilgileri doldur, başvurun yönetim kuruluna iletilsin. Yıldızlı (*) alanlar zorunludur.</p>
 
+      <ol class="form-progress" data-i18n-aria="form.progress" aria-label="Başvuru adımları">
+        <li class="is-current" aria-current="step"><span class="fp-num" aria-hidden="true">1</span><span class="fp-label" data-i18n="form.sec1">Kişisel Bilgiler</span></li>
+        <li><span class="fp-num" aria-hidden="true">2</span><span class="fp-label" data-i18n="form.sec2">Deneyim ve İlgi Alanları</span></li>
+        <li><span class="fp-num" aria-hidden="true">3</span><span class="fp-label" data-i18n="form.step3">Onay ve Gönderim</span></li>
+      </ol>
+      <p class="sr-only" id="formStepLive" aria-live="polite"></p>
+
       <form id="joinForm" novalidate>
+        <div class="form-step" data-form-step="1" tabindex="-1">
         <p class="form-legend" data-i18n="form.sec1">Kişisel Bilgiler</p>
         <div class="form-grid">
           <label class="field">
@@ -664,6 +672,9 @@
           </label>
         </div>
 
+        </div>
+
+        <div class="form-step" data-form-step="2" tabindex="-1" hidden>
         <p class="form-legend" data-i18n="form.sec2">Deneyim ve İlgi Alanları</p>
         <div class="form-grid">
           <label class="field">
@@ -700,6 +711,9 @@
           <em class="field-error"></em>
         </label>
 
+        </div>
+
+        <div class="form-step" data-form-step="3" tabindex="-1" hidden>
         <p class="form-legend" data-i18n="form.sec3">Onaylar</p>
         <label class="chk chk-consent">
           <input type="checkbox" id="chkPrinciples" required>
@@ -716,17 +730,22 @@
 
         <!-- Cloudflare Turnstile — form-config.js'de site anahtarı tanımlanınca görünür olur -->
         <div class="cf-turnstile turnstile-box" id="turnstileBox" hidden></div>
+        </div>
 
         <div class="form-status" id="formStatus" role="status" aria-live="polite"></div>
 
-        <button type="submit" class="btn btn-primary btn-block" id="joinSubmit" data-i18n="form.submit">Üyelik Bilgilerini Gönder</button>
+        <div class="form-nav">
+          <button type="button" class="btn btn-ghost form-back" data-form-back data-i18n="form.back" hidden>Geri</button>
+          <button type="button" class="btn btn-primary form-next" data-form-next data-i18n="form.next">Devam Et</button>
+          <button type="submit" class="btn btn-primary btn-block" id="joinSubmit" data-i18n="form.submit" hidden>Üyelik Bilgilerini Gönder</button>
+        </div>
         <p class="fee-fine center" data-i18n="form.note">Başvurun en geç otuz gün içinde değerlendirilir ve sonuç sana e-posta ile bildirilir.</p>
       </form>
     </div>
 
     <div id="joinSuccess" hidden class="form-success">
       <div class="success-mark" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5" pathLength="1"/></svg>
       </div>
       <h3 data-i18n="form.okTitle">Başvurun bize ulaştı</h3>
       <p data-i18n="form.okBody">Teşekkürler! Yönetim kurulu başvurunu en geç otuz gün içinde değerlendirecek ve sonucu e-posta ile ileteceğiz.</p>
@@ -738,8 +757,8 @@
 <a class="to-top" href="#anasayfa" id="toTop" data-i18n-aria="a11y.top" aria-label="Yukarı çık">↑</a>
 
 <script src="assets/js/form-config.js?v=23"></script>
-<script src="assets/js/i18n.js?v=27"></script>
+<script src="assets/js/i18n.js?v=28"></script>
 <script src="assets/js/analytics.js?v=24" defer></script>
-<script src="assets/js/main.js?v=26" defer></script>
+<script src="assets/js/main.js?v=27" defer></script>
 </body>
 </html>

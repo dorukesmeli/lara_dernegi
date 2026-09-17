@@ -88,7 +88,7 @@ tr: {
 
 "form.title":"Üyelik Başvuru Formu",
 "form.intro":"Aşağıdaki bilgileri doldur, başvurun yönetim kuruluna iletilsin. Yıldızlı (*) alanlar zorunludur.",
-"form.sec1":"Kişisel Bilgiler","form.sec2":"Deneyim ve İlgi Alanları","form.sec3":"Onaylar",
+"form.sec1":"Kişisel Bilgiler","form.sec2":"Deneyim ve İlgi Alanları","form.sec3":"Onaylar","form.step3":"Onay ve Gönderim","form.next":"Devam Et","form.back":"Geri","form.progress":"Başvuru adımları","form.stepLive":"Adım {n} / 3: {label}",
 "form.name":"Ad Soyad","form.email":"E-posta","form.phone":"Telefon",
 "form.birth":"Doğum Tarihi","form.city":"Şehir","form.job":"Meslek / Bölüm","form.langs":"Bildiğin Yabancı Diller",
 "form.jobPh":"Örn: Endüstri Mühendisliği öğrencisi","form.langsPh":"Örn: İngilizce (B2), Almanca (A2)","form.cityPh":"Örn: Antalya",
@@ -212,7 +212,7 @@ en: {
 
 "form.title":"Membership Application Form",
 "form.intro":"Fill in the details below and your application will be sent to the board. Fields marked (*) are required.",
-"form.sec1":"Personal Details","form.sec2":"Experience and Interests","form.sec3":"Confirmations",
+"form.sec1":"Personal Details","form.sec2":"Experience and Interests","form.sec3":"Confirmations","form.step3":"Confirm and Send","form.next":"Continue","form.back":"Back","form.progress":"Application steps","form.stepLive":"Step {n} of 3: {label}",
 "form.name":"Full Name","form.email":"Email","form.phone":"Phone",
 "form.birth":"Date of Birth","form.city":"City","form.job":"Occupation / Field of Study","form.langs":"Languages You Speak",
 "form.jobPh":"e.g. Industrial Engineering student","form.langsPh":"e.g. English (B2), German (A2)","form.cityPh":"e.g. Antalya",

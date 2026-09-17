@@ -271,33 +271,42 @@
     if (e.target.hasAttribute('data-close')) closeJoin();
   });
 
-  function validate() {
-    clearErrors();
-    var first = null;
+  /* Alan kuralları — tüm formda (gönderim) ve tek adımda (Devam Et) aynı kurallar kullanılır.
+     Hatalı alanları sırayla döner; hata mesajı yazmaz. */
+  function alanHatalari(kapsam) {
+    var hatalar = [];
 
-    joinForm.querySelectorAll('input[required], textarea[required]').forEach(function (input) {
+    kapsam.querySelectorAll('input[required], textarea[required]').forEach(function (input) {
       if (input.type === 'checkbox') return;
-      if (!input.value.trim()) first = fieldError(input, t('form.required')) || first;
+      if (!input.value.trim()) hatalar.push([input, t('form.required')]);
     });
 
-    var email = joinForm.querySelector('input[type="email"]');
-    if (email.value.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.value.trim())) {
-      first = fieldError(email, t('form.emailInvalid')) || first;
+    var email = kapsam.querySelector('input[type="email"]');
+    if (email && email.value.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.value.trim())) {
+      hatalar.push([email, t('form.emailInvalid')]);
     }
 
-    var phone = joinForm.querySelector('input[type="tel"]');
-    if (phone.value.trim() && phone.value.replace(/\D/g, '').length < 10) {
-      first = fieldError(phone, t('form.phoneInvalid')) || first;
+    var phone = kapsam.querySelector('input[type="tel"]');
+    if (phone && phone.value.trim() && phone.value.replace(/\D/g, '').length < 10) {
+      hatalar.push([phone, t('form.phoneInvalid')]);
     }
 
-    var birth = joinForm.querySelector('input[type="date"]');
-    if (birth.value) {
+    var birth = kapsam.querySelector('input[type="date"]');
+    if (birth && birth.value) {
       var b = new Date(birth.value), now = new Date();
       var age = now.getFullYear() - b.getFullYear();
       var m = now.getMonth() - b.getMonth();
       if (m < 0 || (m === 0 && now.getDate() < b.getDate())) age--;
-      if (age < 18) first = fieldError(birth, t('form.age18')) || first;
+      if (age < 18) hatalar.push([birth, t('form.age18')]);
     }
+    return hatalar;
+  }
+
+  function validate() {
+    clearErrors();
+    var first = null;
+
+    alanHatalari(joinForm).forEach(function (h) { first = fieldError(h[0], h[1]) || first; });
 
     var consentErr = document.getElementById('consentError');
     var p = document.getElementById('chkPrinciples'), k = document.getElementById('chkKvkk');
@@ -309,12 +318,102 @@
     }
 
     if (first) {
+      adimaGit(adimNumarasi(first), false);   // hatalı alan başka bir adımdaysa o adımı göster
       var f = first.closest('.field') || first;
       f.scrollIntoView({ block: 'center', behavior: 'smooth' });
       if (first.focus) first.focus({ preventScroll: true });
     }
     return !first;
   }
+
+  /* ---------- ADIMLAR (yalnızca görünüm) ----------
+     Form üç görsel adıma bölünür. Alanlar, adlar, doğrulama kuralları ve gönderim aynıdır;
+     son adımdaki "Gönder" mevcut submit akışını çalıştırır. */
+  var formAdimlari = Array.prototype.slice.call(joinForm.querySelectorAll('[data-form-step]'));
+  var adimGostergesi = Array.prototype.slice.call(document.querySelectorAll('.form-progress li'));
+  var adimDuyuru  = document.getElementById('formStepLive');
+  var geriBtn     = joinForm.querySelector('[data-form-back]');
+  var ileriBtn    = joinForm.querySelector('[data-form-next]');
+  var formAdimi   = 1;
+  var ADIM_SAYISI = formAdimlari.length || 1;
+
+  function adimNumarasi(el) {
+    var kap = el && el.closest ? el.closest('[data-form-step]') : null;
+    return kap ? parseInt(kap.getAttribute('data-form-step'), 10) : formAdimi;
+  }
+
+  function adimaGit(n, odaklan) {
+    if (!formAdimlari.length) return;
+    n = Math.max(1, Math.min(ADIM_SAYISI, n));
+    var yon = n >= formAdimi ? 'ileri' : 'geri';
+    var degisti = n !== formAdimi;
+    formAdimi = n;
+    formAdimlari.forEach(function (adim, i) {
+      var aktif = i + 1 === n;
+      adim.hidden = !aktif;
+      if (aktif && degisti) {
+        adim.classList.remove('adim-ileri', 'adim-geri');
+        void adim.offsetWidth;                   // giriş animasyonunu yeniden başlat
+        adim.classList.add('adim-' + yon);
+      }
+    });
+    adimGostergesi.forEach(function (li, i) {
+      li.classList.toggle('is-current', i + 1 === n);
+      li.classList.toggle('is-done', i + 1 < n);
+      if (i + 1 === n) li.setAttribute('aria-current', 'step'); else li.removeAttribute('aria-current');
+    });
+    if (geriBtn) geriBtn.hidden = n === 1;
+    if (ileriBtn) ileriBtn.hidden = n === ADIM_SAYISI;
+    joinBtn.hidden = n !== ADIM_SAYISI;
+    if (!degisti) return;
+    if (adimDuyuru) {
+      var etiket = adimGostergesi[n - 1] ? adimGostergesi[n - 1].querySelector('.fp-label').textContent : '';
+      adimDuyuru.textContent = (t('form.stepLive') || '').replace('{n}', n).replace('{label}', etiket);
+    }
+    var kart = joinModal.querySelector('.modal-card');
+    if (kart) kart.scrollTop = 0;
+    if (odaklan) formAdimlari[n - 1].focus({ preventScroll: true });
+  }
+
+  /* "Devam Et": yalnızca bulunduğun adımdaki alanlar mevcut kurallarla kontrol edilir */
+  function ileriGit() {
+    var adim = formAdimlari[formAdimi - 1];
+    if (!adim) return;
+    adim.querySelectorAll('.field-error').forEach(function (e) { e.textContent = ''; });
+    adim.querySelectorAll('.has-error').forEach(function (e) { e.classList.remove('has-error'); });
+    var hatalar = alanHatalari(adim);
+    if (hatalar.length) {
+      hatalar.forEach(function (h) { fieldError(h[0], h[1]); });
+      var ilk = hatalar[0][0];
+      (ilk.closest('.field') || ilk).scrollIntoView({ block: 'center', behavior: 'smooth' });
+      ilk.focus({ preventScroll: true });
+      return;
+    }
+    adimaGit(formAdimi + 1, true);
+  }
+
+  if (ileriBtn) ileriBtn.addEventListener('click', ileriGit);
+
+  /* İki onay da işaretlenince önceki "zorunlu" uyarısı hemen kalksın (kural aynı; yalnızca mesaj) */
+  ['chkPrinciples', 'chkKvkk'].forEach(function (id) {
+    var kutu = document.getElementById(id);
+    if (!kutu) return;
+    kutu.addEventListener('change', function () {
+      var p = document.getElementById('chkPrinciples'), k = document.getElementById('chkKvkk');
+      var hata = document.getElementById('consentError');
+      if (hata && p.checked && k.checked) hata.textContent = '';
+    });
+  });
+  if (geriBtn) geriBtn.addEventListener('click', function () { adimaGit(formAdimi - 1, true); });
+
+  /* Son adıma gelmeden Enter formu göndermesin; bir sonraki adıma geçsin */
+  joinForm.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter' || formAdimi >= ADIM_SAYISI) return;
+    var el = e.target;
+    if (!el || el.tagName === 'TEXTAREA' || el.tagName === 'BUTTON' || el.type === 'checkbox') return;
+    e.preventDefault();
+    ileriGit();
+  });
 
   /* Sunucuya giden sade veri. Etiketler ve e-posta biçimi sunucuda oluşturulur;
      alıcı adres tarayıcıdan gönderilmez. */
@@ -377,6 +476,7 @@
 
   joinForm.addEventListener('submit', function (e) {
     e.preventDefault();
+    if (formAdimi < ADIM_SAYISI) { ileriGit(); return; }   // son adım değilse gönderme, ilerle
     if (sending) return;                       // çift tıklama koruması
     setStatus('');
 
@@ -468,6 +568,22 @@
 
   links.forEach(function (a) { a.addEventListener('click', closeNav); });
 
+  /* Açık pencerede klavye odağı pencerenin içinde döner */
+  function odakTuzagi(e) {
+    var acik = !joinModal.hidden ? joinModal : (!modal.hidden ? modal : null);
+    if (!acik || e.key !== 'Tab') return;
+    var odaklanabilir = Array.prototype.filter.call(
+      acik.querySelectorAll('a[href], button:not([disabled]), input:not([tabindex="-1"]):not([type="hidden"]), select, textarea, [tabindex]:not([tabindex="-1"])'),
+      function (el) { return el.offsetParent !== null || el === document.activeElement; }
+    );
+    if (!odaklanabilir.length) return;
+    var ilk = odaklanabilir[0], son = odaklanabilir[odaklanabilir.length - 1];
+    if (!acik.contains(document.activeElement)) { e.preventDefault(); ilk.focus(); return; }
+    if (e.shiftKey && (document.activeElement === ilk || !odaklanabilir.includes(document.activeElement))) { e.preventDefault(); son.focus(); }
+    else if (!e.shiftKey && document.activeElement === son) { e.preventDefault(); ilk.focus(); }
+  }
+  document.addEventListener('keydown', odakTuzagi);
+
   document.addEventListener('keydown', function (e) {
     if (e.key !== 'Escape') return;
     if (!joinModal.hidden) { closeJoin(); return; }
@@ -528,6 +644,7 @@
       hareketEkle(sec.querySelector('.section-title'), 'mask');
       sec.querySelectorAll('.section-intro, .join-lead').forEach(function (el) { hareketEkle(el, 'rise'); });
     });
+    hareketEkle(document.querySelector('.steps'), 'line');
     document.querySelectorAll('.steps li').forEach(function (el) { hareketEkle(el, 'slide'); });
     hareketEkle(document.querySelector('.join-card'), 'scale');
     document.querySelectorAll('.lara-item').forEach(function (el) { hareketEkle(el, 'letter'); el.setAttribute('data-motion-step', '140'); });
