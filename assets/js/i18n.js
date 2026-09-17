@@ -81,6 +81,7 @@ tr: {
 "contact.l2":"Merkez","contact.v2":"Antalya, Türkiye",
 "contact.l3":"Kütük No","contact.v3":"07-046-100",
 "contact.l4":"Faaliyet Alanı","contact.v4":"Sosyal, kültürel, sanatsal ve eğitsel alanlar (yurt içi ve yurt dışı)",
+"contact.l5":"Resmî Web Sitesi",
 "contact.c2t":"Doğrudan İletişim","contact.email":"E-posta","contact.phone":"Telefon",
 "contact.c3t":"Sosyal Medya &amp; Topluluk","contact.socialNote":"Sosyal medya hesaplarımız çok yakında burada olacak.","contact.soon":"E-posta ve telefon bilgilerimiz çok yakında burada olacak.",
 
@@ -120,7 +121,8 @@ tr: {
 "goals.8":"Avrupa değerlerini, yaşam boyu öğrenmeyi ve kişisel gelişimi teşvik etmek.",
 "goals.t1":"Uluslararası İş Birliği","goals.t2":"Eğitim ve Hareketlilik","goals.t3":"Kültürlerarası Diyalog","goals.t4":"Yenilikçi Uygulamalar",
 "goals.t5":"Sürdürülebilir Ortaklıklar","goals.t6":"Herkes İçin Fırsat","goals.t7":"Gönüllülük ve Kapsayıcılık","goals.t8":"Avrupa Değerleri",
-"footer.meta1":"Antalya, Türkiye · Kütük No: 07-046-100","footer.rights":"LARA Derneği. Tüm hakları saklıdır."
+"footer.meta1":"Antalya, Türkiye · Kütük No: 07-046-100",
+"footer.official":"laraassociation.org, LARA Derneği'nin resmî web sitesidir.","footer.rights":"LARA Derneği. Tüm hakları saklıdır."
 },
 
 /* ============================== ENGLISH ============================== */
@@ -202,6 +204,7 @@ en: {
 "contact.l2":"Headquarters","contact.v2":"Antalya, Türkiye",
 "contact.l3":"Registry No","contact.v3":"07-046-100",
 "contact.l4":"Field of Activity","contact.v4":"Social, cultural, artistic and educational fields (in Türkiye and abroad)",
+"contact.l5":"Official Website",
 "contact.c2t":"Direct Contact","contact.email":"Email","contact.phone":"Phone",
 "contact.c3t":"Social Media &amp; Community","contact.socialNote":"Our social media accounts will be linked here very soon.","contact.soon":"Our email and phone details will be available here very soon.",
 
@@ -241,6 +244,7 @@ en: {
 "goals.8":"Promoting European values, lifelong learning and personal development.",
 "goals.t1":"International Cooperation","goals.t2":"Education and Mobility","goals.t3":"Intercultural Dialogue","goals.t4":"Innovative Practices",
 "goals.t5":"Sustainable Partnerships","goals.t6":"Opportunity for All","goals.t7":"Volunteering and Inclusion","goals.t8":"European Values",
-"footer.meta1":"Antalya, Türkiye · Registry No: 07-046-100","footer.rights":"LARA Association. All rights reserved."
+"footer.meta1":"Antalya, Türkiye · Registry No: 07-046-100",
+"footer.official":"laraassociation.org is the official website of LARA Association.","footer.rights":"LARA Association. All rights reserved."
 }
 };
