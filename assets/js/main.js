@@ -119,10 +119,13 @@
     bioBody.innerHTML     = t('bio.' + id + '.body') || '';
     var big = card.dataset.photoLg || card.dataset.photo;
     if (big) {
-      bioAvatar.outerHTML = '<img class="modal-photo" id="bioAvatar" src="' + big + '" alt="">';
+      var set = card.dataset.photoSet;        // pencerede 112 px: 400 px AVIF/WebP yeterli, büyük JPG yalnızca yedek
+      bioAvatar.outerHTML = set
+        ? '<picture id="bioAvatar"><source type="image/avif" srcset="' + set + '-400.avif"><source type="image/webp" srcset="' + set + '-400.webp"><img class="modal-photo" src="' + big + '" alt="" width="400" height="400" decoding="async"></picture>'
+        : '<img class="modal-photo" id="bioAvatar" src="' + big + '" alt="" width="400" height="400">';
       bioAvatar = document.getElementById('bioAvatar');
     } else {
-      if (bioAvatar.tagName === 'IMG') {
+      if (bioAvatar.tagName !== 'DIV') {
         bioAvatar.outerHTML = '<div class="avatar" id="bioAvatar" aria-hidden="true"></div>';
         bioAvatar = document.getElementById('bioAvatar');
       }
@@ -596,13 +599,33 @@
   });
 
   /* ================= SCROLL DAVRANIŞLARI ================= */
-  function onScroll() {
-    var y = window.scrollY || window.pageYOffset;
-    header.classList.toggle('scrolled', y > 16);
-    if (toTop) toTop.classList.toggle('show', y > 600);
+  /* Kompakt header ve "yukarı çık" düğmesi kaydırma olayı yerine görünmez işaretçilerle
+     (IntersectionObserver) çalışır: sayfanın 16 px ve 600 px noktaları ekrandan çıkınca. */
+  function isaretci(ustPx) {
+    var el = document.createElement('div');
+    el.setAttribute('aria-hidden', 'true');
+    el.style.cssText = 'position:absolute;left:0;top:' + ustPx + 'px;width:1px;height:1px;pointer-events:none;visibility:hidden';
+    document.body.appendChild(el);
+    return el;
   }
-  window.addEventListener('scroll', onScroll, { passive: true });
-  onScroll();
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) { header.classList.toggle('scrolled', !entry.isIntersecting && entry.boundingClientRect.top < 0); });
+    }).observe(isaretci(16));
+    if (toTop) {
+      new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) { toTop.classList.toggle('show', !entry.isIntersecting && entry.boundingClientRect.top < 0); });
+      }).observe(isaretci(600));
+    }
+  } else {
+    var onScroll = function () {
+      var y = window.scrollY || window.pageYOffset;
+      header.classList.toggle('scrolled', y > 16);
+      if (toTop) toTop.classList.toggle('show', y > 600);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  }
 
   var sections = links
     .map(function (a) { return document.querySelector(a.getAttribute('href')); })
@@ -717,7 +740,29 @@
       maniItems.forEach(function (li, i) { li.classList.toggle('is-lit', i < yanik); });
     }
   }
-  if (workItems.length || maniItems.length) {
+  /* Kaydırma dinleyicisi yalnızca bu bölümlerden biri ekrandayken bağlıdır */
+  var kaydirmaBagli = false, gorunenler = 0;
+  function kaydirmaBagla(ac) {
+    if (ac === kaydirmaBagli) return;
+    kaydirmaBagli = ac;
+    window[ac ? 'addEventListener' : 'removeEventListener']('scroll', kaydirmaGuncelle, { passive: true });
+    window[ac ? 'addEventListener' : 'removeEventListener']('resize', kaydirmaGuncelle);
+    if (ac) kaydirmaGuncelle();
+  }
+  var kaydirmaBolumleri = [workList, manifesto].filter(Boolean);
+  if (kaydirmaBolumleri.length && 'IntersectionObserver' in window) {
+    var bolumGozlem = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (!!entry.target.__gorunur === entry.isIntersecting) return;   // yalnızca gerçek değişimi say
+        entry.target.__gorunur = entry.isIntersecting;
+        gorunenler += entry.isIntersecting ? 1 : -1;
+      });
+      if (!gorunenler) kaydirmaGuncelle();      // bölümden çıkarken son durumu (tamamı yanık / son satır) yaz
+      kaydirmaBagla(gorunenler > 0);
+    }, { rootMargin: '20% 0px 20% 0px' });
+    kaydirmaBolumleri.forEach(function (el) { bolumGozlem.observe(el); });
+    kaydirmaGuncelle();
+  } else if (kaydirmaBolumleri.length) {
     window.addEventListener('scroll', kaydirmaGuncelle, { passive: true });
     window.addEventListener('resize', kaydirmaGuncelle);
     kaydirmaGuncelle();
@@ -729,4 +774,5 @@
   });
 
   applyLang(startLang);
+  document.documentElement.classList.remove('lang-pending');
 })();

@@ -123,7 +123,8 @@ tr: {
 "goals.t1":"Uluslararası İş Birliği","goals.t2":"Eğitim ve Hareketlilik","goals.t3":"Kültürlerarası Diyalog","goals.t4":"Yenilikçi Uygulamalar",
 "goals.t5":"Sürdürülebilir Ortaklıklar","goals.t6":"Herkes İçin Fırsat","goals.t7":"Gönüllülük ve Kapsayıcılık","goals.t8":"Avrupa Değerleri",
 "footer.meta1":"Antalya, Türkiye · Kütük No: 07-046-100",
-"footer.official":"laraassociation.org, LARA Derneği'nin resmî web sitesidir.","footer.rights":"LARA Derneği. Tüm hakları saklıdır."
+"footer.official":"laraassociation.org, LARA Derneği'nin resmî web sitesidir.",
+"footer.about":"Antalya merkezli bir gençlik derneği olarak gençlik çalışmaları ve uluslararası hareketlilik projeleriyle gençlerin gelişimini destekliyoruz.","footer.explore":"Keşfet","footer.assoc":"Dernek","footer.registry":"Kütük No: 07-046-100","footer.rights":"LARA Derneği. Tüm hakları saklıdır."
 },
 
 /* ============================== ENGLISH ============================== */
@@ -247,6 +248,7 @@ en: {
 "goals.t1":"International Cooperation","goals.t2":"Education and Mobility","goals.t3":"Intercultural Dialogue","goals.t4":"Innovative Practices",
 "goals.t5":"Sustainable Partnerships","goals.t6":"Opportunity for All","goals.t7":"Volunteering and Inclusion","goals.t8":"European Values",
 "footer.meta1":"Antalya, Türkiye · Registry No: 07-046-100",
-"footer.official":"laraassociation.org is the official website of LARA Association.","footer.rights":"LARA Association. All rights reserved."
+"footer.official":"laraassociation.org is the official website of LARA Association.",
+"footer.about":"A youth association based in Antalya, supporting young people’s development through youth work and international mobility projects.","footer.explore":"Explore","footer.assoc":"Association","footer.registry":"Registry No: 07-046-100","footer.rights":"LARA Association. All rights reserved."
 }
 };
