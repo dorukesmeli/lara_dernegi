@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="tr" data-lang="tr">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-RKP970V3Z3"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-RKP970V3Z3');
+</script>
+<script>
+  /* JS var + dil tercihi erkenden: İngilizce görecek ziyaretçiye önce Türkçe metin çizilmez (kayma olmaz).
+     main.js çeviriyi uygulayınca sınıfı kaldırır; bir sorun olursa 2,5 sn sonra sayfa yine görünür. */
+  (function (d) {
+    d.classList.add('js');
+    try {
+      var s = localStorage.getItem('lara-lang');
+      var en = s ? s === 'en' : (navigator.language || '').slice(0, 2).toLowerCase() !== 'tr';
+      if (en) { d.classList.add('lang-pending'); setTimeout(function () { d.classList.remove('lang-pending'); }, 2500); }
+    } catch (e) {}
+  })(document.documentElement);
+</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ekip — LARA Derneği</title>
+<meta name="description" data-i18n-meta="meta.descTeam" content="LARA Derneği yönetim kurulu üyeleri ve görev dağılımı.">
+<meta name="theme-color" content="#0F2B4C">
+<link rel="icon" href="/assets/img/favicon-48.png" type="image/png" sizes="48x48">
+<link rel="icon" href="/assets/img/favicon.png" type="image/png" sizes="512x512">
+<link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Ekip — LARA Derneği">
+<meta property="og:description" content="LARA Derneği yönetim kurulu üyeleri ve görev dağılımı.">
+<link rel="canonical" href="https://laraassociation.org/ekip/">
+<meta property="og:url" content="https://laraassociation.org/ekip/">
+<meta property="og:site_name" content="LARA Derneği">
+<meta property="og:image" content="https://laraassociation.org/assets/img/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta property="og:locale" content="tr_TR">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600&display=swap"></noscript>
+<link rel="stylesheet" href="/assets/css/style.css?v=32">
+</head>
+<body data-title-key="meta.titleTeam">
+
+<a class="skip-link" href="#icerik" data-i18n="a11y.skip">İçeriğe geç</a>
+
+<header class="site-header" id="siteHeader">
+  <div class="container header-inner">
+    <a class="brand" href="/" aria-label="LARA">
+      <picture><source type="image/webp" srcset="/assets/img/logo-mark-120.webp"><img class="brand-mark" src="/assets/img/logo-mark.png" alt="" width="338" height="458" decoding="async"></picture>
+      <span class="brand-text">
+        <span class="brand-name">LARA</span>
+        <span class="brand-tagline" lang="en">
+          <span class="c-navy">Learning</span> <span class="dot">•</span>
+          <span class="c-teal">Action</span> <span class="dot">•</span>
+          <span class="c-navy">Rights</span> <span class="dot">•</span>
+          <span class="c-orange">Access</span>
+        </span>
+      </span>
+    </a>
+
+    <nav class="primary-nav" id="primaryNav" aria-label="LARA">
+      <ul>
+        <li><a href="/" data-i18n="nav.home">Anasayfa</a></li>
+        <li><a href="/hakkimizda/" data-i18n="nav.about">Biz Kimiz</a></li>
+        <li><a href="/ne-yapiyoruz/" data-i18n="nav.what">Ne Yapıyoruz</a></li>
+        <li><a href="/erasmus/" data-i18n="nav.erasmus">Erasmus+</a></li>
+        <li><a href="/ekip/" class="active" data-i18n="nav.team">Ekip</a></li>
+        <li><a href="/kurumsal/" data-i18n="nav.corporate">Kurumsal</a></li>
+        <li><a href="/iletisim/" data-i18n="nav.contact">İletişim</a></li>
+        <li class="nav-cta"><a class="btn btn-primary btn-sm" href="/uye-ol/" data-i18n="nav.join">Üye Ol</a></li>
+      </ul>
+    </nav>
+
+    <div class="header-actions">
+      <div class="lang-switch" role="group" data-i18n-aria="a11y.lang" aria-label="Dil seçimi">
+        <button type="button" class="lang-btn is-active" data-set-lang="tr">TR</button>
+        <span class="lang-sep" aria-hidden="true">/</span>
+        <button type="button" class="lang-btn" data-set-lang="en">EN</button>
+      </div>
+      <button class="nav-toggle" id="navToggle" aria-expanded="false" aria-controls="primaryNav" data-i18n-aria="a11y.menu" aria-label="Menüyü aç">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<section class="page-hero" id="icerik">
+  <div class="container">
+    <p class="section-eyebrow" data-i18n="team.eyebrow">Ekip</p>
+    <h1 class="page-title" data-i18n="team.title">Yönetim Kurulu</h1>
+    <p class="page-intro" data-i18n="team.pageIntro">Derneğimizin karar organı olan yönetim kurulu, genel kurulca üç yıllığına seçilir. Aşağıda kurul üyelerimizi ve görev dağılımını bulabilirsiniz.</p>
+  </div>
+</section>
+
+<section class="section section-alt" id="ekip">
+  <div class="container">
+
+    <div class="grid grid-5 team-grid">
+      <article class="card person has-bio reveal" data-bio="anil" data-track-role="president" data-name="Anıl AŞKAR" data-photo="/assets/img/team/anil.jpg" data-photo-set="/assets/img/team/anil" data-photo-lg="/assets/img/team/anil-lg.jpg" data-initials="AA" data-avatar="av-navy">
+        <div class="person-portrait tone-navy"><div class="avatar av-navy" aria-hidden="true">AA</div></div>
+        <div class="person-meta">
+          <p class="role" data-i18n="team.r.anil">Başkan</p>
+          <h3>Anıl AŞKAR</h3>
+        </div>
+        <button type="button" class="person-more" data-i18n="team.more">Profili Gör →</button>
+      </article>
+      <article class="card person has-bio reveal" data-bio="doruk" data-track-role="vice_president" data-name="Doruk EŞMELİ" data-photo="/assets/img/team/doruk.jpg" data-photo-set="/assets/img/team/doruk" data-photo-lg="/assets/img/team/doruk-lg.jpg" data-initials="DE" data-avatar="av-teal">
+        <div class="person-portrait tone-teal"><div class="avatar av-teal" aria-hidden="true">DE</div></div>
+        <div class="person-meta">
+          <p class="role" data-i18n="team.r.doruk">Başkan Yardımcısı</p>
+          <h3>Doruk EŞMELİ</h3>
+        </div>
+        <button type="button" class="person-more" data-i18n="team.more">Profili Gör →</button>
+      </article>
+      <article class="card person has-bio reveal" data-bio="baran" data-track-role="treasurer" data-name="Baran ÇAKICI" data-photo="/assets/img/team/baran.jpg" data-photo-set="/assets/img/team/baran" data-photo-lg="/assets/img/team/baran-lg.jpg" data-initials="BÇ" data-avatar="av-orange">
+        <div class="person-portrait tone-orange"><div class="avatar av-orange" aria-hidden="true">BÇ</div></div>
+        <div class="person-meta">
+          <p class="role" data-i18n="team.r.baran">Sayman</p>
+          <h3>Baran ÇAKICI</h3>
+        </div>
+        <button type="button" class="person-more" data-i18n="team.more">Profili Gör →</button>
+      </article>
+      <article class="card person reveal">
+        <div class="person-portrait tone-navy"><div class="avatar av-navy" aria-hidden="true">EO</div></div>
+        <div class="person-meta">
+          <p class="role" data-i18n="team.r.ecem">Sekreter</p>
+          <h3>Ecem ONURLU</h3>
+        </div>
+      </article>
+      <article class="card person reveal">
+        <div class="person-portrait tone-teal"><div class="avatar av-teal" aria-hidden="true">MB</div></div>
+        <div class="person-meta">
+          <p class="role" data-i18n="team.r.eren">Kurucu Üye</p>
+          <h3>Muhammed Eren BİLGİN</h3>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+<div class="modal" id="bioModal" hidden>
+  <div class="modal-backdrop" data-close></div>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="bioName">
+    <button type="button" class="modal-close" data-close data-i18n-aria="team.close" aria-label="Kapat">&times;</button>
+    <div class="modal-head">
+      <div class="avatar av-navy" id="bioAvatar" aria-hidden="true">AA</div>
+      <div class="modal-titles">
+        <h3 id="bioName">—</h3>
+        <p class="modal-role" id="bioRole">—</p>
+      </div>
+    </div>
+    <div class="modal-body" id="bioBody"></div>
+  </div>
+</div>
+</main>
+
+<footer class="site-footer">
+  <svg class="footer-waves" viewBox="0 0 1440 320" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+    <path d="M0 210C180 160 360 150 540 178s360 70 540 48 270-72 360-86"/>
+    <path d="M0 246C200 196 380 190 560 214s350 60 520 40 260-60 360-72"/>
+    <path d="M0 282C220 236 400 232 580 252s340 50 500 32 250-50 360-58"/>
+  </svg>
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-col footer-about">
+        <a class="footer-brand" href="/" aria-label="LARA">
+          <picture>
+            <source type="image/webp" srcset="/assets/img/logo-mark-120.webp">
+            <img src="/assets/img/logo-mark.png" alt="" width="338" height="458" loading="lazy" decoding="async">
+          </picture>
+          <span>
+            <span class="footer-name">LARA</span>
+            <span class="footer-tagline" lang="en">Learning · Action · Rights · Access</span>
+          </span>
+        </a>
+        <p class="footer-desc" data-i18n="footer.about">Antalya merkezli bir gençlik derneği olarak gençlik çalışmaları ve uluslararası hareketlilik projeleriyle gençlerin gelişimini destekliyoruz.</p>
+      </div>
+
+      <nav class="footer-col" aria-labelledby="footerExplore">
+        <h2 class="footer-title" id="footerExplore" data-i18n="footer.explore">Keşfet</h2>
+        <ul class="footer-links">
+          <li><a href="/" data-i18n="nav.home">Anasayfa</a></li>
+          <li><a href="/hakkimizda/" data-i18n="nav.about">Biz Kimiz</a></li>
+          <li><a href="/hakkimizda/#amaclarimiz" data-i18n="nav.goals">Amaçlarımız</a></li>
+          <li><a href="/ne-yapiyoruz/" data-i18n="nav.what">Ne Yapıyoruz</a></li>
+          <li><a href="/erasmus/" data-i18n="nav.erasmus">Erasmus+</a></li>
+          <li><a href="/ekip/" data-i18n="nav.team">Ekip</a></li>
+        </ul>
+      </nav>
+
+      <div class="footer-col">
+        <h2 class="footer-title" data-i18n="footer.assoc">Dernek</h2>
+        <ul class="footer-info">
+          <li data-i18n="contact.v2">Antalya, Türkiye</li>
+          <li data-i18n="footer.registry">Kütük No: 07-046-100</li>
+          <li data-i18n="footer.official">laraassociation.org, LARA Derneği'nin resmî web sitesidir.</li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h2 class="footer-title" data-i18n="nav.contact">İletişim</h2>
+        <ul class="footer-links">
+          <li><a href="mailto:laradernegi@gmail.com">laradernegi@gmail.com</a></li>
+          <li><a href="/iletisim/" data-i18n="contact.title">Bize Ulaş</a></li>
+          <li><a href="/kurumsal/" data-i18n="nav.corporate">Kurumsal</a></li>
+          <li><a href="/uye-ol/" data-i18n="nav.join">Üye Ol</a></li>
+          <li><a href="/kvkk/" data-i18n="footer.kvkk">KVKK Aydınlatma Metni</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <p class="footer-copy">© <span id="year">2026</span> <span data-i18n="footer.rights">LARA Derneği. Tüm hakları saklıdır.</span></p>
+      <div class="lang-switch footer-lang" role="group" data-i18n-aria="a11y.lang" aria-label="Dil seçimi">
+        <button type="button" class="lang-btn is-active" data-set-lang="tr">TR</button>
+        <span class="lang-sep" aria-hidden="true">/</span>
+        <button type="button" class="lang-btn" data-set-lang="en">EN</button>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<a class="to-top" href="#icerik" id="toTop" data-i18n-aria="a11y.top" aria-label="Yukarı çık">↑</a>
+
+<script src="/assets/js/form-config.js?v=23" defer></script>
+<script src="/assets/js/i18n.js?v=30" defer></script>
+<script src="/assets/js/i18n-pages.js?v=4" defer></script>
+<script src="/assets/js/analytics.js?v=25" defer></script>
+<script src="/assets/js/main.js?v=31" defer></script>
+</body>
+</html>

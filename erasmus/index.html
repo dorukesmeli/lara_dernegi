@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="tr" data-lang="tr">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-RKP970V3Z3"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-RKP970V3Z3');
+</script>
+<script>
+  /* JS var + dil tercihi erkenden: İngilizce görecek ziyaretçiye önce Türkçe metin çizilmez (kayma olmaz).
+     main.js çeviriyi uygulayınca sınıfı kaldırır; bir sorun olursa 2,5 sn sonra sayfa yine görünür. */
+  (function (d) {
+    d.classList.add('js');
+    try {
+      var s = localStorage.getItem('lara-lang');
+      var en = s ? s === 'en' : (navigator.language || '').slice(0, 2).toLowerCase() !== 'tr';
+      if (en) { d.classList.add('lang-pending'); setTimeout(function () { d.classList.remove('lang-pending'); }, 2500); }
+    } catch (e) {}
+  })(document.documentElement);
+</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Erasmus+ Nedir? — LARA Derneği</title>
+<meta name="description" data-i18n-meta="meta.descEr" content="Erasmus+ hareketlilik türleri, başvuru şartları, hibe tutarları ve başvuru süreci.">
+<meta name="theme-color" content="#0F2B4C">
+<link rel="icon" href="/assets/img/favicon-48.png" type="image/png" sizes="48x48">
+<link rel="icon" href="/assets/img/favicon.png" type="image/png" sizes="512x512">
+<link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Erasmus+ Nedir? — LARA Derneği">
+<meta property="og:description" content="Erasmus+ hareketlilik türleri, başvuru şartları, hibe tutarları ve başvuru süreci.">
+<link rel="canonical" href="https://laraassociation.org/erasmus/">
+<meta property="og:url" content="https://laraassociation.org/erasmus/">
+<meta property="og:site_name" content="LARA Derneği">
+<meta property="og:image" content="https://laraassociation.org/assets/img/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta property="og:locale" content="tr_TR">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600&display=swap"></noscript>
+<link rel="stylesheet" href="/assets/css/style.css?v=32">
+</head>
+<body data-title-key="meta.titleEr">
+
+<a class="skip-link" href="#icerik" data-i18n="a11y.skip">İçeriğe geç</a>
+
+<header class="site-header" id="siteHeader">
+  <div class="container header-inner">
+    <a class="brand" href="/" aria-label="LARA">
+      <picture><source type="image/webp" srcset="/assets/img/logo-mark-120.webp"><img class="brand-mark" src="/assets/img/logo-mark.png" alt="" width="338" height="458" decoding="async"></picture>
+      <span class="brand-text">
+        <span class="brand-name">LARA</span>
+        <span class="brand-tagline" lang="en">
+          <span class="c-navy">Learning</span> <span class="dot">•</span>
+          <span class="c-teal">Action</span> <span class="dot">•</span>
+          <span class="c-navy">Rights</span> <span class="dot">•</span>
+          <span class="c-orange">Access</span>
+        </span>
+      </span>
+    </a>
+
+    <nav class="primary-nav" id="primaryNav" aria-label="LARA">
+      <ul>
+        <li><a href="/" data-i18n="nav.home">Anasayfa</a></li>
+        <li><a href="/hakkimizda/" data-i18n="nav.about">Biz Kimiz</a></li>
+        <li><a href="/ne-yapiyoruz/" data-i18n="nav.what">Ne Yapıyoruz</a></li>
+        <li><a href="/erasmus/" class="active" data-i18n="nav.erasmus">Erasmus+</a></li>
+        <li><a href="/ekip/" data-i18n="nav.team">Ekip</a></li>
+        <li><a href="/kurumsal/" data-i18n="nav.corporate">Kurumsal</a></li>
+        <li><a href="/iletisim/" data-i18n="nav.contact">İletişim</a></li>
+        <li class="nav-cta"><a class="btn btn-primary btn-sm" href="/uye-ol/" data-i18n="nav.join">Üye Ol</a></li>
+      </ul>
+    </nav>
+
+    <div class="header-actions">
+      <div class="lang-switch" role="group" data-i18n-aria="a11y.lang" aria-label="Dil seçimi">
+        <button type="button" class="lang-btn is-active" data-set-lang="tr">TR</button>
+        <span class="lang-sep" aria-hidden="true">/</span>
+        <button type="button" class="lang-btn" data-set-lang="en">EN</button>
+      </div>
+      <button class="nav-toggle" id="navToggle" aria-expanded="false" aria-controls="primaryNav" data-i18n-aria="a11y.menu" aria-label="Menüyü aç">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<section class="page-hero" id="icerik">
+  <div class="container">
+    <p class="section-eyebrow" data-i18n="er.eyebrow">Erasmus+</p>
+    <h1 class="page-title" data-i18n="er.title">Erasmus+ Nedir?</h1>
+    <p class="page-intro" data-i18n="er.intro">Erasmus+, Avrupa Birliği'nin eğitim, öğretim, gençlik ve spor alanlarındaki 2021-2027 dönemi programıdır. Amacı, yaşam boyu öğrenme yoluyla insanların eğitsel, mesleki ve kişisel gelişimini desteklemek; kapsayıcı, yeşil ve dijital bir Avrupa'ya katkı sunmaktır. Program; kapsayıcılık ve çeşitlilik, dijital dönüşüm, çevre ve iklim ile gençlerin demokratik hayata katılımını öncelik olarak belirlemiştir.</p>
+  </div>
+</section>
+
+<section class="section" id="yapisi">
+  <div class="container">
+    <p class="section-eyebrow" data-i18n="er.kaEyebrow">Programın Yapısı</p>
+    <h2 class="section-title" data-i18n="er.kaTitle">Üç Ana Eylem</h2>
+    <div class="grid grid-3">
+      <article class="card reveal">
+        <h3 data-i18n="er.ka1t">Ana Eylem 1 — Öğrenme Hareketliliği</h3>
+        <p data-i18n="er.ka1d">Bireylerin ve grupların yurt dışında öğrenmesini destekler: gençlik değişimleri, gençlik çalışanlarının hareketliliği, öğrenci ve personel hareketliliği, gençlik katılım faaliyetleri ve DiscoverEU bu eylem altındadır.</p>
+      </article>
+      <article class="card reveal">
+        <h3 data-i18n="er.ka2t">Ana Eylem 2 — Kuruluşlar Arası İşbirliği</h3>
+        <p data-i18n="er.ka2d">Kuruluşların ortak projeler yürütmesini destekler. İşbirliği ortaklıkları ve özellikle yeni başlayan küçük kuruluşlara açık olan küçük ölçekli ortaklıklar bu eylemin parçasıdır.</p>
+      </article>
+      <article class="card reveal">
+        <h3 data-i18n="er.ka3t">Ana Eylem 3 — Politika Desteği</h3>
+        <p data-i18n="er.ka3d">Avrupa düzeyinde politika geliştirme ve işbirliğini destekler; "Avrupa Gençliği Birlikte" gibi eylemler ile Jean Monnet faaliyetleri bu başlık altında yürütülür.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="section section-alt" id="firsatlar">
+  <div class="container">
+    <p class="section-eyebrow" data-i18n="er.oEyebrow">Gençlik Alanı</p>
+    <h2 class="section-title" data-i18n="er.oTitle">Gençlere Açık Fırsatlar</h2>
+    <div class="grid grid-2">
+      <article class="card reveal">
+        <h3 data-i18n="er.o1t">Gençlik Değişimleri</h3>
+        <p data-i18n="er.o1d">En az iki farklı ülkeden gençlik gruplarının bir araya gelip ortak bir tema üzerinde yaygın öğrenme programı yürüttüğü buluşmalardır: atölyeler, tartışmalar, canlandırmalar ve açık hava etkinlikleri. Seyahat günleri hariç 5-21 gün sürer; 13-30 yaş arası gençler katılabilir. Bir faaliyette en az 16, en fazla 60 katılımcı bulunur; yalnızca imkânı kısıtlı gençlerden oluşan değişimlerde bu sayı 10'a düşer. Her grubun en az bir grup lideri olur ve grup liderleri 18 yaşından büyük olmalıdır.</p>
+      </article>
+      <article class="card reveal">
+        <h3 data-i18n="er.o2t">Gençlik Çalışanları Hareketliliği</h3>
+        <p data-i18n="er.o2d">Gençlik çalışanlarının mesleki gelişimi için düzenlenen eğitim kursları, seminerler ve iş başı gözlem gibi faaliyetlerdir. Amaç, katılımcıların yöntem ve yetkinliklerini geliştirip bunları kendi kuruluşlarındaki gençlik çalışmasına taşımalarıdır.</p>
+      </article>
+      <article class="card reveal">
+        <h3 data-i18n="er.o3t">Gençlik Katılım Faaliyetleri</h3>
+        <p data-i18n="er.o3d">Gençlerin demokratik hayata katılımını güçlendiren, 3 ile 24 ay arasında süren projelerdir. Gençlerin kendilerini ilgilendiren konularda karar alma süreçlerine katılmasını, karar alıcılarla buluşmasını ve medya okuryazarlığı ile eleştirel düşünme becerilerini geliştirmesini hedefler.</p>
+      </article>
+      <article class="card reveal">
+        <h3 data-i18n="er.o4t">DiscoverEU</h3>
+        <p data-i18n="er.o4d">18 yaşındaki gençlere Avrupa'yı kısa süreli bir seyahatle keşfetme imkânı verir. Genel eylemde gençler Avrupa Gençlik Portalı üzerinden doğrudan başvurur. Kapsayıcılık eylemi ise 18-21 yaş arasındaki imkânı kısıtlı gençleri hedefler ve kuruluşlar aracılığıyla yürütülür.</p>
+      </article>
+    </div>
+    <p class="muted-sm section-note" data-i18n="er.oNote">Bunların yanında Erasmus+ Sanal Değişimler, farklı ülkelerden gençleri çevrimiçi ortamda buluşturan ek bir imkân sunar.</p>
+  </div>
+</section>
+
+<section class="section" id="nasil-katilinir">
+  <div class="container">
+    <p class="section-eyebrow" data-i18n="er.hEyebrow">Nasıl Katılınır?</p>
+    <h2 class="section-title" data-i18n="er.hTitle">Bir Gencin İzleyeceği Yol</h2>
+    <ol class="steps steps-light">
+      <li><span class="step-num">1</span><div><strong data-i18n="er.s1t">Bir Kuruluşla Bağ Kur</strong><p data-i18n="er.s1d">Gençlik projelerine başvurular kuruluşlar tarafından yapılır; katılım da kuruluşlar aracılığıyla olur. Dernek, vakıf veya gençlik kuruluşlarına üye olmak bu bağı kurmanın en yaygın yoludur.</p></div></li>
+      <li><span class="step-num">2</span><div><strong data-i18n="er.s2t">Gayri Resmî Grup Seçeneği</strong><p data-i18n="er.s2d">Gençlik alanındaki bazı eylemlerde, 13-30 yaş arasındaki en az dört gencin oluşturduğu gayri resmî gruplar da katılımcı kuruluş sayılır. Grubu, 18 yaşından büyük bir üye temsil eder.</p></div></li>
+      <li><span class="step-num">3</span><div><strong data-i18n="er.s3t">Çağrıları ve Son Tarihleri Takip Et</strong><p data-i18n="er.s3d">Projeler, yıllık teklif çağrısı kapsamında belirli son başvuru tarihleriyle duyurulur. Katılımcı arayan projeler genellikle kuruluşların duyuru kanallarından paylaşılır.</p></div></li>
+      <li><span class="step-num">4</span><div><strong data-i18n="er.s4t">Hazırlık, Faaliyet ve Tanınma</strong><p data-i18n="er.s4d">Seçilen katılımcılar faaliyet öncesi hazırlık sürecine katılır. Kazanılan yaygın ve serbest öğrenme çıktıları, Youthpass gibi Avrupa tanınma araçlarıyla belgelendirilir.</p></div></li>
+    </ol>
+  </div>
+</section>
+
+<section class="section section-alt" id="kimler">
+  <div class="container">
+    <div class="grid grid-2">
+      <div class="card contact-card reveal">
+        <h2 data-i18n="er.whoTitle">Kimler Yararlanabilir?</h2>
+        <dl class="info-list">
+          <div><dt data-i18n="er.w1t">Gençler</dt><dd data-i18n="er.w1d">Gençlik değişimlerinde 13-30 yaş arası gençler; DiscoverEU kapsayıcılık eyleminde 18-21 yaş arası imkânı kısıtlı gençler.</dd></div>
+          <div><dt data-i18n="er.w2t">Kuruluşlar</dt><dd data-i18n="er.w2d">Gençlik alanında çalışan dernekler, vakıflar, kamu kurumları ve kâr amacı gütmeyen kuruluşlar başvuru sahibi veya ortak olabilir.</dd></div>
+          <div><dt data-i18n="er.w3t">Kapsayıcılık</dt><dd data-i18n="er.w3d">Program, imkânı kısıtlı katılımcıların katılımını öncelik sayar ve bu katılımcılar için ek destek imkânları sunar.</dd></div>
+        </dl>
+      </div>
+      <div class="card contact-card reveal">
+        <h2 data-i18n="er.euroTitle">Avrupa Dayanışma Programı</h2>
+        <p data-i18n="er.euroD">Erasmus+ ile birlikte anılan Avrupa Dayanışma Programı, gençlerin yurt içinde veya yurt dışında gönüllülük faaliyetlerine katılmasını destekleyen ayrı bir Avrupa Birliği programıdır. Fırsatlar ve başvuru koşulları Avrupa Gençlik Portalı üzerinden duyurulur.</p>
+        <a class="btn btn-ghost btn-sm" href="https://youth.europa.eu/solidarity_en" target="_blank" rel="noopener noreferrer" data-i18n="er.euroLink">Avrupa Gençlik Portalı</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="lara-rolu">
+  <div class="container">
+    <div class="grid grid-2">
+      <article class="card reveal">
+        <h2 data-i18n="er.roleT">LARA ile İlişkisi</h2>
+        <p data-i18n="er.roleD">Derneğimizin tüzüğünde tanımlı faaliyet alanları arasında Erasmus+, Avrupa Dayanışma Programı ve benzeri programlara proje yazmak, bu projelere ortak olmak ve uluslararası hareketlilik çalışmaları yürütmek yer alır. Bu sayfa, üyelerimiz ve gençler için bilgilendirme amacıyla hazırlanmıştır.</p>
+      </article>
+      <article class="card reveal">
+        <h2 data-i18n="er.sourceT">Kaynaklar</h2>
+        <p data-i18n="er.sourceD">Bu sayfadaki bilgiler Avrupa Komisyonu'nun Erasmus+ Program Rehberi'ne dayanır. Kurallar ve tutarlar her yıl güncellenir; başvuru öncesinde aşağıdaki resmî kaynakları inceleyiniz. Türkiye'de program, Avrupa Birliği Eğitim ve Gençlik Programları Merkezi Başkanlığı (Türkiye Ulusal Ajansı) tarafından yürütülür.</p>
+        <ul class="footer-links source-links">
+          <li><a href="https://erasmus-plus.ec.europa.eu/programme-guide/introduction" target="_blank" rel="noopener noreferrer">Erasmus+ Program Rehberi</a></li>
+          <li><a href="https://www.ua.gov.tr/" target="_blank" rel="noopener noreferrer">ua.gov.tr — Türkiye Ulusal Ajansı</a></li>
+          <li><a href="https://youth.europa.eu/" target="_blank" rel="noopener noreferrer">youth.europa.eu — Avrupa Gençlik Portalı</a></li>
+        </ul>
+      </article>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="site-footer">
+  <svg class="footer-waves" viewBox="0 0 1440 320" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+    <path d="M0 210C180 160 360 150 540 178s360 70 540 48 270-72 360-86"/>
+    <path d="M0 246C200 196 380 190 560 214s350 60 520 40 260-60 360-72"/>
+    <path d="M0 282C220 236 400 232 580 252s340 50 500 32 250-50 360-58"/>
+  </svg>
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-col footer-about">
+        <a class="footer-brand" href="/" aria-label="LARA">
+          <picture>
+            <source type="image/webp" srcset="/assets/img/logo-mark-120.webp">
+            <img src="/assets/img/logo-mark.png" alt="" width="338" height="458" loading="lazy" decoding="async">
+          </picture>
+          <span>
+            <span class="footer-name">LARA</span>
+            <span class="footer-tagline" lang="en">Learning · Action · Rights · Access</span>
+          </span>
+        </a>
+        <p class="footer-desc" data-i18n="footer.about">Antalya merkezli bir gençlik derneği olarak gençlik çalışmaları ve uluslararası hareketlilik projeleriyle gençlerin gelişimini destekliyoruz.</p>
+      </div>
+
+      <nav class="footer-col" aria-labelledby="footerExplore">
+        <h2 class="footer-title" id="footerExplore" data-i18n="footer.explore">Keşfet</h2>
+        <ul class="footer-links">
+          <li><a href="/" data-i18n="nav.home">Anasayfa</a></li>
+          <li><a href="/hakkimizda/" data-i18n="nav.about">Biz Kimiz</a></li>
+          <li><a href="/hakkimizda/#amaclarimiz" data-i18n="nav.goals">Amaçlarımız</a></li>
+          <li><a href="/ne-yapiyoruz/" data-i18n="nav.what">Ne Yapıyoruz</a></li>
+          <li><a href="/erasmus/" data-i18n="nav.erasmus">Erasmus+</a></li>
+          <li><a href="/ekip/" data-i18n="nav.team">Ekip</a></li>
+        </ul>
+      </nav>
+
+      <div class="footer-col">
+        <h2 class="footer-title" data-i18n="footer.assoc">Dernek</h2>
+        <ul class="footer-info">
+          <li data-i18n="contact.v2">Antalya, Türkiye</li>
+          <li data-i18n="footer.registry">Kütük No: 07-046-100</li>
+          <li data-i18n="footer.official">laraassociation.org, LARA Derneği'nin resmî web sitesidir.</li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h2 class="footer-title" data-i18n="nav.contact">İletişim</h2>
+        <ul class="footer-links">
+          <li><a href="mailto:laradernegi@gmail.com">laradernegi@gmail.com</a></li>
+          <li><a href="/iletisim/" data-i18n="contact.title">Bize Ulaş</a></li>
+          <li><a href="/kurumsal/" data-i18n="nav.corporate">Kurumsal</a></li>
+          <li><a href="/uye-ol/" data-i18n="nav.join">Üye Ol</a></li>
+          <li><a href="/kvkk/" data-i18n="footer.kvkk">KVKK Aydınlatma Metni</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <p class="footer-copy">© <span id="year">2026</span> <span data-i18n="footer.rights">LARA Derneği. Tüm hakları saklıdır.</span></p>
+      <div class="lang-switch footer-lang" role="group" data-i18n-aria="a11y.lang" aria-label="Dil seçimi">
+        <button type="button" class="lang-btn is-active" data-set-lang="tr">TR</button>
+        <span class="lang-sep" aria-hidden="true">/</span>
+        <button type="button" class="lang-btn" data-set-lang="en">EN</button>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<a class="to-top" href="#icerik" id="toTop" data-i18n-aria="a11y.top" aria-label="Yukarı çık">↑</a>
+
+<script src="/assets/js/form-config.js?v=23" defer></script>
+<script src="/assets/js/i18n.js?v=30" defer></script>
+<script src="/assets/js/i18n-pages.js?v=4" defer></script>
+<script src="/assets/js/analytics.js?v=25" defer></script>
+<script src="/assets/js/main.js?v=31" defer></script>
+</body>
+</html>

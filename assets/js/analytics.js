@@ -38,7 +38,10 @@
   /* Bölüm kimlikleri → raporlarda görünecek sabit konum adları */
   var SECTION_KEYS = {
     anasayfa: 'hero', hakkimizda: 'about', amaclarimiz: 'goals', faaliyetler: 'activities',
-    ilkeler: 'principles', projeler: 'projects', ekip: 'team', 'uye-ol': 'join_section', iletisim: 'contact'
+    ilkeler: 'principles', ekip: 'team', 'uye-ol': 'join_section', uyelik: 'join_section',
+    'basvuru-formu': 'form_section', iletisim: 'contact', organlar: 'bodies',
+    'resmi-bilgiler': 'legal_info', 'karar-sureci': 'governance', programlar: 'programmes',
+    'nasil-katilinir': 'how_to_join', 'lara-rolu': 'our_role', 'kvkk-metni': 'privacy', icerik: 'page_top'
   };
 
   var PLATFORMS = [
@@ -109,6 +112,7 @@
     }
     if (el.closest('.site-footer')) return 'footer';
     if (el.closest('.modal')) return 'modal';
+    if (el.closest('.page-hero')) return 'page_header';
     var section = el.closest('section[id]');
     return (section && SECTION_KEYS[section.id]) || 'unknown';
   }
@@ -131,7 +135,7 @@
       var a = target.closest('a[href]');
       if (a) {
         var href = a.getAttribute('href') || '';
-        if (href === '#uye-ol') {
+        if (href === '#uye-ol' || href === '/uye-ol/' || href === '#uyelik' || href === '#basvuru-formu') {
           trackEvent('join_cta_click', { language: currentLanguage(), location: locationOf(a) });
         } else if (/^mailto:/i.test(href)) {
           trackEvent('contact_email_click', { location: locationOf(a) });

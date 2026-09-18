@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="tr" data-lang="tr">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-RKP970V3Z3"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-RKP970V3Z3');
+</script>
+<script>
+  /* JS var + dil tercihi erkenden: İngilizce görecek ziyaretçiye önce Türkçe metin çizilmez (kayma olmaz).
+     main.js çeviriyi uygulayınca sınıfı kaldırır; bir sorun olursa 2,5 sn sonra sayfa yine görünür. */
+  (function (d) {
+    d.classList.add('js');
+    try {
+      var s = localStorage.getItem('lara-lang');
+      var en = s ? s === 'en' : (navigator.language || '').slice(0, 2).toLowerCase() !== 'tr';
+      if (en) { d.classList.add('lang-pending'); setTimeout(function () { d.classList.remove('lang-pending'); }, 2500); }
+    } catch (e) {}
+  })(document.documentElement);
+</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Üye Ol — LARA Derneği</title>
+<meta name="description" data-i18n-meta="meta.descJoin" content="LARA Derneği üyelik koşulları, başvuru adımları ve üyelik başvuru formu.">
+<meta name="theme-color" content="#0F2B4C">
+<link rel="icon" href="/assets/img/favicon-48.png" type="image/png" sizes="48x48">
+<link rel="icon" href="/assets/img/favicon.png" type="image/png" sizes="512x512">
+<link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Üye Ol — LARA Derneği">
+<meta property="og:description" content="LARA Derneği üyelik koşulları, başvuru adımları ve üyelik başvuru formu.">
+<link rel="canonical" href="https://laraassociation.org/uye-ol/">
+<meta property="og:url" content="https://laraassociation.org/uye-ol/">
+<meta property="og:site_name" content="LARA Derneği">
+<meta property="og:image" content="https://laraassociation.org/assets/img/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta property="og:locale" content="tr_TR">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600&display=swap"></noscript>
+<link rel="stylesheet" href="/assets/css/style.css?v=32">
+</head>
+<body data-title-key="meta.titleJoin">
+
+<a class="skip-link" href="#icerik" data-i18n="a11y.skip">İçeriğe geç</a>
+
+<header class="site-header" id="siteHeader">
+  <div class="container header-inner">
+    <a class="brand" href="/" aria-label="LARA">
+      <picture><source type="image/webp" srcset="/assets/img/logo-mark-120.webp"><img class="brand-mark" src="/assets/img/logo-mark.png" alt="" width="338" height="458" decoding="async"></picture>
+      <span class="brand-text">
+        <span class="brand-name">LARA</span>
+        <span class="brand-tagline" lang="en">
+          <span class="c-navy">Learning</span> <span class="dot">•</span>
+          <span class="c-teal">Action</span> <span class="dot">•</span>
+          <span class="c-navy">Rights</span> <span class="dot">•</span>
+          <span class="c-orange">Access</span>
+        </span>
+      </span>
+    </a>
+
+    <nav class="primary-nav" id="primaryNav" aria-label="LARA">
+      <ul>
+        <li><a href="/" data-i18n="nav.home">Anasayfa</a></li>
+        <li><a href="/hakkimizda/" data-i18n="nav.about">Biz Kimiz</a></li>
+        <li><a href="/ne-yapiyoruz/" data-i18n="nav.what">Ne Yapıyoruz</a></li>
+        <li><a href="/erasmus/" data-i18n="nav.erasmus">Erasmus+</a></li>
+        <li><a href="/ekip/" data-i18n="nav.team">Ekip</a></li>
+        <li><a href="/kurumsal/" data-i18n="nav.corporate">Kurumsal</a></li>
+        <li><a href="/iletisim/" data-i18n="nav.contact">İletişim</a></li>
+        <li class="nav-cta"><a class="btn btn-primary btn-sm" href="/uye-ol/" data-i18n="nav.join">Üye Ol</a></li>
+      </ul>
+    </nav>
+
+    <div class="header-actions">
+      <div class="lang-switch" role="group" data-i18n-aria="a11y.lang" aria-label="Dil seçimi">
+        <button type="button" class="lang-btn is-active" data-set-lang="tr">TR</button>
+        <span class="lang-sep" aria-hidden="true">/</span>
+        <button type="button" class="lang-btn" data-set-lang="en">EN</button>
+      </div>
+      <button class="nav-toggle" id="navToggle" aria-expanded="false" aria-controls="primaryNav" data-i18n-aria="a11y.menu" aria-label="Menüyü aç">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<section class="page-hero" id="icerik">
+  <div class="container">
+    <p class="section-eyebrow" data-i18n="join.eyebrow">Katıl</p>
+    <h1 class="page-title" data-i18n="join.title2">LARA'ya Üye Ol</h1>
+    <p class="page-intro" data-i18n="join.pageIntro">Yurt dışında bir projede yer almak, yeni insanlar tanımak ya da bir fikri hayata geçirmek istiyorsan doğru yerdesin. Deneyim şartı, CV ve mülakat yok.</p>
+  </div>
+</section>
+
+<section class="section join" id="uyelik">
+  <div class="container">
+    <div class="join-grid">
+      <div class="join-copy">
+
+        <ol class="steps">
+          <li><span class="step-num">1</span><div><strong data-i18n="join.s1t">Başvurunu İlet</strong><p data-i18n="join.s1d">Dernek başkanlığına yazılı olarak üyelik başvurusu yapılır.</p></div></li>
+          <li><span class="step-num">2</span><div><strong data-i18n="join.s2t">Yönetim Kurulu Değerlendirir</strong><p data-i18n="join.s2d">Başvuru en çok otuz gün içinde kabul veya ret şeklinde karara bağlanır.</p></div></li>
+          <li><span class="step-num">3</span><div><strong data-i18n="join.s3t">Sonuç Bildirilir</strong><p data-i18n="join.s3d">Karar yazıyla başvuru sahibine iletilir; kabul edilen üye kayıt defterine işlenir.</p></div></li>
+        </ol>
+      </div>
+
+      <aside class="join-card">
+        <h3 data-i18n="join.feeTitle">Üyelik Ödentileri</h3>
+        <div class="fee">
+          <span class="fee-label" data-i18n="join.fee1t">Giriş Ödentisi</span>
+          <span class="fee-note" data-i18n="join.fee1d">Üyeliğe kabul edildiğinde bir kez alınır</span>
+        </div>
+        <div class="fee">
+          <span class="fee-label" data-i18n="join.fee2t">Aylık Aidat</span>
+          <span class="fee-note" data-i18n="join.fee2d">Her ay düzenli olarak alınır</span>
+        </div>
+        <p class="fee-fine" data-i18n="join.feeNote">Güncel tutarları başvurunda seninle paylaşırız.</p>
+
+        <h4 data-i18n="join.condTitle">Kimler Üye Olabilir?</h4>
+        <ul class="check-list">
+          <li data-i18n="join.cond1">18 yaşından büyük olan herkes</li>
+          <li data-i18n="join.cond2">Derneğin amacını ve ilkelerini benimseyenler</li>
+          <li data-i18n="join.cond3">Gençlik çalışmalarına ilgi duyanlar</li>
+          <li data-i18n="join.cond4">Projelerde gönüllü olarak yer almak isteyenler</li>
+        </ul>
+
+        <a class="btn btn-primary btn-block" href="#basvuru-formu" data-i18n="join.ctaForm">Başvuru Formuna Git</a>
+        <p class="fee-fine center" data-i18n="join.ctaNote">Sorularını iletişim bölümündeki kanallardan sorabilirsin.</p>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<section class="section section-alt" id="basvuru-formu">
+  <div class="container container-narrow">
+    <div class="form-panel">
+
+    <div id="joinFormWrap">
+      <h3 id="joinFormTitle" data-i18n="form.title">Üyelik Başvuru Formu</h3>
+      <p class="form-intro" data-i18n="form.intro">Aşağıdaki bilgileri doldur, başvurun yönetim kuruluna iletilsin. Yıldızlı (*) alanlar zorunludur.</p>
+
+      <ol class="form-progress" data-i18n-aria="form.progress" aria-label="Başvuru adımları">
+        <li class="is-current" aria-current="step"><span class="fp-num" aria-hidden="true">1</span><span class="fp-label" data-i18n="form.sec1">Kişisel Bilgiler</span></li>
+        <li><span class="fp-num" aria-hidden="true">2</span><span class="fp-label" data-i18n="form.sec2">Deneyim ve İlgi Alanları</span></li>
+        <li><span class="fp-num" aria-hidden="true">3</span><span class="fp-label" data-i18n="form.step3">Onay ve Gönderim</span></li>
+      </ol>
+      <p class="sr-only" id="formStepLive" aria-live="polite"></p>
+
+      <form id="joinForm" novalidate>
+        <div class="form-step" data-form-step="1" tabindex="-1">
+        <p class="form-legend" data-i18n="form.sec1">Kişisel Bilgiler</p>
+        <div class="form-grid">
+          <label class="field">
+            <span><i data-i18n="form.name">Ad Soyad</i> <b>*</b></span>
+            <input type="text" name="Ad Soyad" autocomplete="name" required>
+            <em class="field-error"></em>
+          </label>
+          <label class="field">
+            <span><i data-i18n="form.email">E-posta</i> <b>*</b></span>
+            <input type="email" name="E-posta" autocomplete="email" required>
+            <em class="field-error"></em>
+          </label>
+          <label class="field">
+            <span><i data-i18n="form.phone">Telefon</i> <b>*</b></span>
+            <input type="tel" name="Telefon" autocomplete="tel" placeholder="+90 5__ ___ __ __" required>
+            <em class="field-error"></em>
+          </label>
+          <label class="field">
+            <span><i data-i18n="form.birth">Doğum Tarihi</i> <b>*</b></span>
+            <input type="date" name="Doğum Tarihi" required>
+            <em class="field-error"></em>
+          </label>
+          <label class="field">
+            <span data-i18n="form.city">Şehir</span>
+            <input type="text" name="Şehir" data-i18n-ph="form.cityPh" placeholder="Örn: Antalya">
+            <em class="field-error"></em>
+          </label>
+          <label class="field">
+            <span data-i18n="form.job">Meslek / Bölüm</span>
+            <input type="text" name="Meslek / Bölüm" data-i18n-ph="form.jobPh" placeholder="Örn: Endüstri Mühendisliği öğrencisi">
+            <em class="field-error"></em>
+          </label>
+        </div>
+
+        </div>
+
+        <div class="form-step" data-form-step="2" tabindex="-1" hidden>
+        <p class="form-legend" data-i18n="form.sec2">Deneyim ve İlgi Alanları</p>
+        <div class="form-grid">
+          <label class="field">
+            <span data-i18n="form.langs">Bildiğin Yabancı Diller</span>
+            <input type="text" name="Yabancı Diller" data-i18n-ph="form.langsPh" placeholder="Örn: İngilizce (B2), Almanca (A2)">
+            <em class="field-error"></em>
+          </label>
+          <label class="field">
+            <span data-i18n="form.exp">Daha önce Erasmus+ veya gençlik projesine katıldın mı?</span>
+            <select name="Proje Deneyimi">
+              <option value="" data-i18n="form.exp0">Seçiniz</option>
+              <option data-i18n="form.exp1">Evet, katıldım</option>
+              <option data-i18n="form.exp2">Hayır, ilk kez katılacağım</option>
+            </select>
+            <em class="field-error"></em>
+          </label>
+        </div>
+
+        <fieldset class="field-group">
+          <legend data-i18n="form.interests">Hangi alanlarda yer almak istersin?</legend>
+          <div class="chk-grid">
+            <label class="chk"><input type="checkbox" name="ilgi" value="Uluslararası projeler ve hareketlilik"><span data-i18n="form.i1">Uluslararası projeler ve hareketlilik</span></label>
+            <label class="chk"><input type="checkbox" name="ilgi" value="Eğitim çalışmaları ve atölyeler"><span data-i18n="form.i2">Eğitim çalışmaları ve atölyeler</span></label>
+            <label class="chk"><input type="checkbox" name="ilgi" value="Sosyal ve kültürel etkinlikler"><span data-i18n="form.i3">Sosyal ve kültürel etkinlikler</span></label>
+            <label class="chk"><input type="checkbox" name="ilgi" value="Gönüllülük ve dayanışma"><span data-i18n="form.i4">Gönüllülük ve dayanışma</span></label>
+            <label class="chk"><input type="checkbox" name="ilgi" value="İletişim, tasarım ve sosyal medya"><span data-i18n="form.i5">İletişim, tasarım ve sosyal medya</span></label>
+            <label class="chk"><input type="checkbox" name="ilgi" value="Proje yazımı ve hibe başvuruları"><span data-i18n="form.i6">Proje yazımı ve hibe başvuruları</span></label>
+          </div>
+        </fieldset>
+
+        <label class="field">
+          <span data-i18n="form.motivation">Neden LARA'ya katılmak istiyorsun?</span>
+          <textarea name="Motivasyon" rows="4" data-i18n-ph="form.motivationPh" placeholder="Kendinden kısaca bahset; beklentilerin ve katkı sunmak istediğin alanlar neler?"></textarea>
+          <em class="field-error"></em>
+        </label>
+
+        </div>
+
+        <div class="form-step" data-form-step="3" tabindex="-1" hidden>
+        <p class="form-legend" data-i18n="form.sec3">Onaylar</p>
+        <label class="chk chk-consent">
+          <input type="checkbox" id="chkPrinciples" required>
+          <span data-i18n="form.principles">18 yaşından büyüğüm; derneğin amacını ve temel ilkelerini benimsiyorum.</span>
+        </label>
+        <label class="chk chk-consent">
+          <input type="checkbox" id="chkKvkk" required>
+          <span data-i18n="form.kvkk">Başvurumda paylaştığım kişisel verilerin, üyelik işlemlerinin yürütülmesi amacıyla LARA Derneği tarafından işlenmesini kabul ediyorum.</span>
+        </label>
+        <em class="field-error" id="consentError"></em>
+
+        <!-- spam tuzağı: insanlar görmez, botlar doldurur -->
+        <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="honey">
+
+        <!-- Cloudflare Turnstile — form-config.js'de site anahtarı tanımlanınca görünür olur -->
+        <div class="cf-turnstile turnstile-box" id="turnstileBox" hidden></div>
+        </div>
+
+        <div class="form-status" id="formStatus" role="status" aria-live="polite"></div>
+
+        <div class="form-nav">
+          <button type="button" class="btn btn-ghost form-back" data-form-back data-i18n="form.back" hidden>Geri</button>
+          <button type="button" class="btn btn-primary form-next" data-form-next data-i18n="form.next">Devam Et</button>
+          <button type="submit" class="btn btn-primary btn-block" id="joinSubmit" data-i18n="form.submit" hidden>Üyelik Bilgilerini Gönder</button>
+        </div>
+        <p class="fee-fine center" data-i18n="form.note">Başvurun en geç otuz gün içinde değerlendirilir ve sonuç sana e-posta ile bildirilir.</p>
+      </form>
+    </div>
+
+    <div id="joinSuccess" hidden class="form-success">
+      <div class="success-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5" pathLength="1"/></svg>
+      </div>
+      <h3 data-i18n="form.okTitle">Başvurun bize ulaştı</h3>
+      <p data-i18n="form.okBody">Teşekkürler! Yönetim kurulu başvurunu en geç otuz gün içinde değerlendirecek ve sonucu e-posta ile ileteceğiz.</p>
+      <a class="btn btn-primary" href="/" data-i18n="form.okHome">Anasayfaya Dön</a>
+    </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="site-footer">
+  <svg class="footer-waves" viewBox="0 0 1440 320" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+    <path d="M0 210C180 160 360 150 540 178s360 70 540 48 270-72 360-86"/>
+    <path d="M0 246C200 196 380 190 560 214s350 60 520 40 260-60 360-72"/>
+    <path d="M0 282C220 236 400 232 580 252s340 50 500 32 250-50 360-58"/>
+  </svg>
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-col footer-about">
+        <a class="footer-brand" href="/" aria-label="LARA">
+          <picture>
+            <source type="image/webp" srcset="/assets/img/logo-mark-120.webp">
+            <img src="/assets/img/logo-mark.png" alt="" width="338" height="458" loading="lazy" decoding="async">
+          </picture>
+          <span>
+            <span class="footer-name">LARA</span>
+            <span class="footer-tagline" lang="en">Learning · Action · Rights · Access</span>
+          </span>
+        </a>
+        <p class="footer-desc" data-i18n="footer.about">Antalya merkezli bir gençlik derneği olarak gençlik çalışmaları ve uluslararası hareketlilik projeleriyle gençlerin gelişimini destekliyoruz.</p>
+      </div>
+
+      <nav class="footer-col" aria-labelledby="footerExplore">
+        <h2 class="footer-title" id="footerExplore" data-i18n="footer.explore">Keşfet</h2>
+        <ul class="footer-links">
+          <li><a href="/" data-i18n="nav.home">Anasayfa</a></li>
+          <li><a href="/hakkimizda/" data-i18n="nav.about">Biz Kimiz</a></li>
+          <li><a href="/hakkimizda/#amaclarimiz" data-i18n="nav.goals">Amaçlarımız</a></li>
+          <li><a href="/ne-yapiyoruz/" data-i18n="nav.what">Ne Yapıyoruz</a></li>
+          <li><a href="/erasmus/" data-i18n="nav.erasmus">Erasmus+</a></li>
+          <li><a href="/ekip/" data-i18n="nav.team">Ekip</a></li>
+        </ul>
+      </nav>
+
+      <div class="footer-col">
+        <h2 class="footer-title" data-i18n="footer.assoc">Dernek</h2>
+        <ul class="footer-info">
+          <li data-i18n="contact.v2">Antalya, Türkiye</li>
+          <li data-i18n="footer.registry">Kütük No: 07-046-100</li>
+          <li data-i18n="footer.official">laraassociation.org, LARA Derneği'nin resmî web sitesidir.</li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h2 class="footer-title" data-i18n="nav.contact">İletişim</h2>
+        <ul class="footer-links">
+          <li><a href="mailto:laradernegi@gmail.com">laradernegi@gmail.com</a></li>
+          <li><a href="/iletisim/" data-i18n="contact.title">Bize Ulaş</a></li>
+          <li><a href="/kurumsal/" data-i18n="nav.corporate">Kurumsal</a></li>
+          <li><a href="/uye-ol/" data-i18n="nav.join">Üye Ol</a></li>
+          <li><a href="/kvkk/" data-i18n="footer.kvkk">KVKK Aydınlatma Metni</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <p class="footer-copy">© <span id="year">2026</span> <span data-i18n="footer.rights">LARA Derneği. Tüm hakları saklıdır.</span></p>
+      <div class="lang-switch footer-lang" role="group" data-i18n-aria="a11y.lang" aria-label="Dil seçimi">
+        <button type="button" class="lang-btn is-active" data-set-lang="tr">TR</button>
+        <span class="lang-sep" aria-hidden="true">/</span>
+        <button type="button" class="lang-btn" data-set-lang="en">EN</button>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<a class="to-top" href="#icerik" id="toTop" data-i18n-aria="a11y.top" aria-label="Yukarı çık">↑</a>
+
+<script src="/assets/js/form-config.js?v=23" defer></script>
+<script src="/assets/js/i18n.js?v=30" defer></script>
+<script src="/assets/js/i18n-pages.js?v=4" defer></script>
+<script src="/assets/js/analytics.js?v=25" defer></script>
+<script src="/assets/js/main.js?v=31" defer></script>
+</body>
+</html>

@@ -6,7 +6,7 @@
   var toggle  = document.getElementById('navToggle');
   var nav     = document.getElementById('primaryNav');
   var toTop   = document.getElementById('toTop');
-  var links   = Array.prototype.slice.call(nav.querySelectorAll('a[href^="#"]'));
+  var links   = nav ? Array.prototype.slice.call(nav.querySelectorAll('a[href^="#"]')) : [];
   var year    = document.getElementById('year');
 
   if (year) year.textContent = new Date().getFullYear();
@@ -54,12 +54,14 @@
       if (v !== null) el.setAttribute('content', v);
     });
 
-    var title = t('meta.title');
+    var title = t(document.body.getAttribute('data-title-key') || 'meta.title');
     if (title) document.title = title;
 
     // menü açıkken etiket doğru kalsın
-    var open = nav.classList.contains('open');
-    toggle.setAttribute('aria-label', t(open ? 'a11y.menuClose' : 'a11y.menu') || '');
+    if (nav && toggle) {
+      var open = nav.classList.contains('open');
+      toggle.setAttribute('aria-label', t(open ? 'a11y.menuClose' : 'a11y.menu') || '');
+    }
 
     document.querySelectorAll('[data-set-lang]').forEach(function (b) {
       b.classList.toggle('is-active', b.getAttribute('data-set-lang') === lang);
@@ -86,7 +88,7 @@
     d.innerHTML = html || '';
     return d.textContent || '';
   }
-  nav.querySelectorAll('a[data-i18n]').forEach(function (el) {
+  if (nav) nav.querySelectorAll('a[data-i18n]').forEach(function (el) {
     var key = el.getAttribute('data-i18n');
     if (!DICT.tr || !DICT.en || DICT.tr[key] === undefined || DICT.en[key] === undefined) return;
     el.setAttribute('data-w-tr', sadeMetin(DICT.tr[key]));
@@ -168,13 +170,13 @@
     av.outerHTML = img;
   });
 
-  document.querySelectorAll('.person.has-bio').forEach(function (card) {
+  if (modal) document.querySelectorAll('.person.has-bio').forEach(function (card) {
     card.addEventListener('click', function () { openBio(card.dataset.bio); });
     var btn = card.querySelector('.person-more');
     if (btn) btn.addEventListener('click', function (e) { e.stopPropagation(); openBio(card.dataset.bio); });
   });
 
-  modal.addEventListener('click', function (e) {
+  if (modal) modal.addEventListener('click', function (e) {
     if (e.target.hasAttribute('data-close')) closeBio();
   });
 
@@ -253,6 +255,7 @@
   }
 
   function openJoin(e) {
+    if (!joinModal) return;
     formOpenedAt = Date.now();
     initTurnstile();
     lastFocus = document.activeElement;
@@ -264,13 +267,20 @@
   }
 
   function closeJoin() {
+    if (!joinModal) return;
     joinModal.hidden = true;
     document.body.classList.remove('modal-open');
     if (lastFocus && lastFocus.focus) lastFocus.focus();
   }
 
   if (openJoinBtn) openJoinBtn.addEventListener('click', openJoin);
-  joinModal.addEventListener('click', function (e) {
+  /* Form pencere içinde değil, doğrudan sayfadaysa (üyelik sayfası) açılış olayı sayfa açılınca gider */
+  if (joinForm && !joinModal) {
+    formOpenedAt = Date.now();
+    initTurnstile();
+    izle('membership_form_open', { language: lang, trigger_location: 'membership_page' });
+  }
+  if (joinModal) joinModal.addEventListener('click', function (e) {
     if (e.target.hasAttribute('data-close')) closeJoin();
   });
 
@@ -332,11 +342,11 @@
   /* ---------- ADIMLAR (yalnızca görünüm) ----------
      Form üç görsel adıma bölünür. Alanlar, adlar, doğrulama kuralları ve gönderim aynıdır;
      son adımdaki "Gönder" mevcut submit akışını çalıştırır. */
-  var formAdimlari = Array.prototype.slice.call(joinForm.querySelectorAll('[data-form-step]'));
+  var formAdimlari = joinForm ? Array.prototype.slice.call(joinForm.querySelectorAll('[data-form-step]')) : [];
   var adimGostergesi = Array.prototype.slice.call(document.querySelectorAll('.form-progress li'));
   var adimDuyuru  = document.getElementById('formStepLive');
-  var geriBtn     = joinForm.querySelector('[data-form-back]');
-  var ileriBtn    = joinForm.querySelector('[data-form-next]');
+  var geriBtn     = joinForm && joinForm.querySelector('[data-form-back]');
+  var ileriBtn    = joinForm && joinForm.querySelector('[data-form-next]');
   var formAdimi   = 1;
   var ADIM_SAYISI = formAdimlari.length || 1;
 
@@ -367,14 +377,15 @@
     });
     if (geriBtn) geriBtn.hidden = n === 1;
     if (ileriBtn) ileriBtn.hidden = n === ADIM_SAYISI;
-    joinBtn.hidden = n !== ADIM_SAYISI;
+    if (joinBtn) joinBtn.hidden = n !== ADIM_SAYISI;
     if (!degisti) return;
     if (adimDuyuru) {
       var etiket = adimGostergesi[n - 1] ? adimGostergesi[n - 1].querySelector('.fp-label').textContent : '';
       adimDuyuru.textContent = (t('form.stepLive') || '').replace('{n}', n).replace('{label}', etiket);
     }
-    var kart = joinModal.querySelector('.modal-card');
-    if (kart) kart.scrollTop = 0;
+    var kart = joinModal && joinModal.querySelector('.modal-card');
+    if (kart) kart.scrollTop = 0;                        // pencerede formun başına dön
+    else formAdimlari[n - 1].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     if (odaklan) formAdimlari[n - 1].focus({ preventScroll: true });
   }
 
@@ -410,7 +421,7 @@
   if (geriBtn) geriBtn.addEventListener('click', function () { adimaGit(formAdimi - 1, true); });
 
   /* Son adıma gelmeden Enter formu göndermesin; bir sonraki adıma geçsin */
-  joinForm.addEventListener('keydown', function (e) {
+  if (joinForm) joinForm.addEventListener('keydown', function (e) {
     if (e.key !== 'Enter' || formAdimi >= ADIM_SAYISI) return;
     var el = e.target;
     if (!el || el.tagName === 'TEXTAREA' || el.tagName === 'BUTTON' || el.type === 'checkbox') return;
@@ -452,7 +463,9 @@
   function showSuccess() {
     joinWrap.hidden = true;
     joinOk.hidden = false;
-    joinModal.querySelector('.modal-card').scrollTop = 0;
+    var kart = joinModal && joinModal.querySelector('.modal-card');
+    if (kart) kart.scrollTop = 0;
+    else joinOk.scrollIntoView({ block: 'center', behavior: 'smooth' });
   }
 
   /* Başarı yalnızca sunucu iki maili de gönderdiğini açıkça bildirirse */
@@ -477,7 +490,7 @@
     izle('membership_application_error', { language: lang, error_type: tur });
   }
 
-  joinForm.addEventListener('submit', function (e) {
+  if (joinForm) joinForm.addEventListener('submit', function (e) {
     e.preventDefault();
     if (formAdimi < ADIM_SAYISI) { ileriGit(); return; }   // son adım değilse gönderme, ilerle
     if (sending) return;                       // çift tıklama koruması
@@ -558,12 +571,13 @@
 
   /* ================= MOBİL MENÜ ================= */
   function closeNav() {
+    if (!nav || !toggle) return;
     nav.classList.remove('open');
     toggle.setAttribute('aria-expanded', 'false');
     toggle.setAttribute('aria-label', t('a11y.menu') || 'Menüyü aç');
   }
 
-  toggle.addEventListener('click', function () {
+  if (toggle && nav) toggle.addEventListener('click', function () {
     var open = nav.classList.toggle('open');
     toggle.setAttribute('aria-expanded', String(open));
     toggle.setAttribute('aria-label', t(open ? 'a11y.menuClose' : 'a11y.menu') || '');
@@ -573,7 +587,7 @@
 
   /* Açık pencerede klavye odağı pencerenin içinde döner */
   function odakTuzagi(e) {
-    var acik = !joinModal.hidden ? joinModal : (!modal.hidden ? modal : null);
+    var acik = (joinModal && !joinModal.hidden) ? joinModal : ((modal && !modal.hidden) ? modal : null);
     if (!acik || e.key !== 'Tab') return;
     var odaklanabilir = Array.prototype.filter.call(
       acik.querySelectorAll('a[href], button:not([disabled]), input:not([tabindex="-1"]):not([type="hidden"]), select, textarea, [tabindex]:not([tabindex="-1"])'),
@@ -589,13 +603,13 @@
 
   document.addEventListener('keydown', function (e) {
     if (e.key !== 'Escape') return;
-    if (!joinModal.hidden) { closeJoin(); return; }
-    if (!modal.hidden) { closeBio(); return; }
-    if (nav.classList.contains('open')) { closeNav(); toggle.focus(); }
+    if (joinModal && !joinModal.hidden) { closeJoin(); return; }
+    if (modal && !modal.hidden) { closeBio(); return; }
+    if (nav && nav.classList.contains('open')) { closeNav(); toggle.focus(); }
   });
 
   document.addEventListener('click', function (e) {
-    if (nav.classList.contains('open') && !nav.contains(e.target) && !toggle.contains(e.target)) closeNav();
+    if (nav && toggle && nav.classList.contains('open') && !nav.contains(e.target) && !toggle.contains(e.target)) closeNav();
   });
 
   /* ================= SCROLL DAVRANIŞLARI ================= */
@@ -608,7 +622,7 @@
     document.body.appendChild(el);
     return el;
   }
-  if ('IntersectionObserver' in window) {
+  if (header && 'IntersectionObserver' in window) {
     new IntersectionObserver(function (entries) {
       entries.forEach(function (entry) { header.classList.toggle('scrolled', !entry.isIntersecting && entry.boundingClientRect.top < 0); });
     }).observe(isaretci(16));
@@ -617,7 +631,7 @@
         entries.forEach(function (entry) { toTop.classList.toggle('show', !entry.isIntersecting && entry.boundingClientRect.top < 0); });
       }).observe(isaretci(600));
     }
-  } else {
+  } else if (header) {
     var onScroll = function () {
       var y = window.scrollY || window.pageYOffset;
       header.classList.toggle('scrolled', y > 16);
