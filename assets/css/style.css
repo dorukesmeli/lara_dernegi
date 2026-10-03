@@ -123,6 +123,7 @@ main p a:not(.btn):hover,.notice a:hover,.info-list a:hover,.contact-links a:hov
 .brand-text{display:flex;flex-direction:column;line-height:1}
 .brand-name{font-family:var(--font-head);font-weight:700;font-size:1.5rem;letter-spacing:.16em;color:var(--navy)}
 .brand-tagline{font-size:.7rem;letter-spacing:.015em;font-weight:600;margin-top:.38rem;white-space:nowrap}
+.brand-legal{font-size:.62em;font-weight:600;letter-spacing:.05em;opacity:.82}
 .brand-tagline .dot{color:var(--orange);opacity:.85;margin:0 .1rem}
 
 .primary-nav{grid-column:2;justify-self:end}
@@ -792,7 +793,7 @@ main p a:not(.btn):hover,.notice a:hover,.info-list a:hover,.contact-links a:hov
 .site-footer .container{position:relative;z-index:1}
 
 .footer-grid{
-  display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,.8fr) minmax(0,1.1fr) minmax(0,.8fr);
+  display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,.9fr) minmax(0,.9fr);
   gap:clamp(2rem,4vw,3.5rem);padding-bottom:clamp(2.2rem,4vw,3rem);
 }
 .footer-brand{display:inline-flex;align-items:center;gap:.9rem;color:#fff;margin-bottom:1.1rem}
@@ -810,6 +811,17 @@ main p a:not(.btn):hover,.notice a:hover,.info-list a:hover,.contact-links a:hov
 .footer-links a{color:#B7C8DA}
 .footer-links a:hover{color:#fff}
 .footer-info li{color:#A9BCD1;line-height:1.55}
+
+.footer-official{padding:1.5rem 0 1.4rem;border-top:1px solid rgba(255,255,255,.1)}
+.footer-official-list{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:1.3rem 1.6rem;margin:0}
+.footer-official-list dt{
+  font-family:var(--font-head);font-size:.68rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  color:#7E95AF;margin-bottom:.35rem;
+}
+.footer-official-list dd{margin:0;color:#DCE6F0;font-size:.9rem;line-height:1.5;overflow-wrap:anywhere}
+.footer-official-list a{color:#DCE6F0;text-decoration:underline;text-underline-offset:3px}
+.footer-official-list a:hover{color:#fff}
+.footer-official-note{margin:1.3rem 0 0;font-size:.84rem;color:#A9BCD1}
 
 .footer-bottom{
   display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:1rem;
@@ -1037,6 +1049,7 @@ body.modal-open{overflow:hidden}
   .corp-grid,.cta-band{grid-template-columns:1fr}
   .cta-actions{justify-content:flex-start}
   .footer-grid{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
+  .footer-official-list{grid-template-columns:repeat(3,minmax(0,1fr))}
 }
 
 @media (max-width:800px){
@@ -1142,6 +1155,7 @@ body.modal-open{overflow:hidden}
   .quote-card{padding:1.5rem 1.3rem}
   .join-card{padding:1.5rem}
   .footer-grid{grid-template-columns:1fr 1fr;gap:2rem 1.5rem}
+  .footer-official-list{grid-template-columns:1fr 1fr}
   .footer-about{grid-column:1 / -1}
   .footer-bottom{flex-direction:column-reverse;align-items:flex-start}
   .social-row{grid-template-columns:1fr}

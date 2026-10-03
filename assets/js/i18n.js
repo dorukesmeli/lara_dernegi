@@ -123,14 +123,15 @@ tr: {
 "goals.t1":"Uluslararası İş Birliği","goals.t2":"Eğitim ve Hareketlilik","goals.t3":"Kültürlerarası Diyalog","goals.t4":"Yenilikçi Uygulamalar",
 "goals.t5":"Sürdürülebilir Ortaklıklar","goals.t6":"Herkes İçin Fırsat","goals.t7":"Gönüllülük ve Kapsayıcılık","goals.t8":"Avrupa Değerleri",
 "footer.meta1":"Antalya, Türkiye · Kütük No: 07-046-100",
-"footer.official":"laraassociation.org, LARA Derneği'nin resmî web sitesidir.",
+"footer.officialTitle":"Resmî Kurum Bilgileri","footer.fName":"Resmî Kurum Adı","footer.fReg":"Dernek Kütük No","footer.fAdmin":"Super Admin E-posta","footer.fDomain":"Google Workspace Domain","footer.fAddr":"Merkez Adresi",
+"footer.official":"laraassociation.org, LARA Derneği'nin resmî internet sitesidir.",
 "footer.about":"Antalya merkezli bir gençlik derneği olarak gençlik çalışmaları ve uluslararası hareketlilik projeleriyle gençlerin gelişimini destekliyoruz.","footer.explore":"Keşfet","footer.assoc":"Dernek","footer.registry":"Kütük No: 07-046-100","footer.rights":"LARA Derneği. Tüm hakları saklıdır."
 },
 
 /* ============================== ENGLISH ============================== */
 en: {
-"meta.title":"LARA Association — Learning · Action · Rights · Access",
-"meta.desc":"LARA Association is a youth association based in Antalya, Türkiye. Through Erasmus+ and European Solidarity Corps projects, it supports young people's development, international mobility and intercultural solidarity.",
+"meta.title":"LARA Derneği — Learning · Action · Rights · Access",
+"meta.desc":"LARA Derneği is a youth association based in Antalya, Türkiye. Through Erasmus+ and European Solidarity Corps projects, it supports young people's development, international mobility and intercultural solidarity.",
 
 "nav.home":"Home","nav.about":"About Us","nav.what":"What We Do","nav.projects":"Projects",
 "nav.team":"Team","nav.contact":"Contact","nav.join":"Join Us",
@@ -145,8 +146,8 @@ en: {
 
 "about.eyebrow":"About Us",
 "about.title":"Our Name Tells Our Purpose: <span class=\"lara-words\"><span class=\"nw\"><span class=\"c-navy\">L</span>earning · <span class=\"c-teal\">A</span>ction ·</span> <span class=\"nw\"><span class=\"c-navy\">R</span>ights · <span class=\"c-orange\">A</span>ccess</span></span>",
-"about.intro2":"LARA Association was founded to support the physical, mental, emotional and social development of young people, to raise their awareness through youth work and international mobility projects, and to foster tolerance, solidarity and cooperation between different cultures.",
-"about.intro":"LARA Association is a youth association headquartered in Antalya, Türkiye. Its name is the abbreviation <strong>L.A.R.A.</strong> — <em>Learning, Action, Rights, Access</em>. The association works in the social, cultural, artistic and educational fields, both in Türkiye and abroad.",
+"about.intro2":"LARA Derneği was founded to support the physical, mental, emotional and social development of young people, to raise their awareness through youth work and international mobility projects, and to foster tolerance, solidarity and cooperation between different cultures.",
+"about.intro":"LARA Derneği is a youth association headquartered in Antalya, Türkiye. Its name is the abbreviation <strong>L.A.R.A.</strong> — <em>Learning, Action, Rights, Access</em>. The association works in the social, cultural, artistic and educational fields, both in Türkiye and abroad.",
 "about.c1t":"Learning","about.c1d":"Organising educational activities such as courses, seminars, conferences and panels; providing and receiving training within grant programmes.",
 "about.c2t":"Action","about.c2d":"Mobilising young people through youth work and international mobility projects; creating social, cultural and artistic activities.",
 "about.c3t":"Rights","about.c3d":"Upholding respect for human dignity, gender equality and non-discrimination in all activities and decision-making processes.",
@@ -203,7 +204,7 @@ en: {
 
 "contact.eyebrow":"Contact","contact.title":"Get in Touch","contact.intro":"A project idea, a partnership proposal or a membership question — we are open to all of them.",
 "contact.c1t":"Association Details",
-"contact.l1":"Name","contact.v1":"LARA Association",
+"contact.l1":"Name","contact.v1":"LARA Derneği",
 "contact.l2":"Registered Address","contact.v2":"Odabaşı Mah. 9546. Sk. No: 10, Kepez / Antalya, Türkiye",
 "contact.l3":"Registry No","contact.v3":"07-046-100",
 "contact.l4":"Field of Activity","contact.v4":"Social, cultural, artistic and educational fields (in Türkiye and abroad)",
@@ -224,7 +225,7 @@ en: {
 "form.i4":"Volunteering and solidarity","form.i5":"Communication, design and social media","form.i6":"Project writing and grant applications",
 "form.motivation":"Why would you like to join LARA?",
 "form.motivationPh":"Tell us a little about yourself — what do you expect, and where would you like to contribute?",
-"form.kvkk":"I consent to the personal data I share in this application being processed by LARA Association for the purpose of carrying out membership procedures.",
+"form.kvkk":"I consent to the personal data I share in this application being processed by LARA Derneği for the purpose of carrying out membership procedures.",
 "form.principles":"I am over 18 and I embrace the purpose and core principles of the association.",
 "form.submit":"Send My Application","form.sending":"Sending…",
 "form.note":"Your application will be reviewed within thirty days at most and the result will be sent to you by email.",
@@ -248,7 +249,8 @@ en: {
 "goals.t1":"International Cooperation","goals.t2":"Education and Mobility","goals.t3":"Intercultural Dialogue","goals.t4":"Innovative Practices",
 "goals.t5":"Sustainable Partnerships","goals.t6":"Opportunity for All","goals.t7":"Volunteering and Inclusion","goals.t8":"European Values",
 "footer.meta1":"Antalya, Türkiye · Registry No: 07-046-100",
-"footer.official":"laraassociation.org is the official website of LARA Association.",
-"footer.about":"A youth association based in Antalya, supporting young people’s development through youth work and international mobility projects.","footer.explore":"Explore","footer.assoc":"Association","footer.registry":"Registry No: 07-046-100","footer.rights":"LARA Association. All rights reserved."
+"footer.officialTitle":"Official Organization Details","footer.fName":"Official Organization Name","footer.fReg":"Association Registration No","footer.fAdmin":"Super Admin Email","footer.fDomain":"Google Workspace Domain","footer.fAddr":"Registered Address",
+"footer.official":"laraassociation.org is the official website of LARA Derneği.",
+"footer.about":"A youth association based in Antalya, supporting young people’s development through youth work and international mobility projects.","footer.explore":"Explore","footer.assoc":"Association","footer.registry":"Registry No: 07-046-100","footer.rights":"LARA Derneği. All rights reserved."
 }
 };
