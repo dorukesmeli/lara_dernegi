@@ -1003,7 +1003,10 @@ body.modal-open{overflow:hidden}
 .js [data-motion="slide"]:not(.is-in){transform:translate3d(-12px,0,0)}
 .js [data-motion="scale"]:not(.is-in){transform:translate3d(0,10px,0) scale(.975)}
 .js [data-motion="mask"]{clip-path:inset(-.25em -.25em -.25em -.25em)}
-.js [data-motion="mask"]:not(.is-in){clip-path:inset(-.25em -.25em 100% -.25em);transform:translate3d(0,.35em,0)}
+/* Alt kırpma 100% olursa öğenin kesişim alanı sıfırlanır, IntersectionObserver eşiği (0.08)
+   hiçbir zaman aşılmaz ve başlık kalıcı olarak görünmez kalır. Kutunun %20'si kırpma dışında
+   bırakılır; opacity 0 olduğu için bu şerit de görünmez, maske etkisi korunur. */
+.js [data-motion="mask"]:not(.is-in){clip-path:inset(-.25em -.25em 80% -.25em);transform:translate3d(0,.35em,0)}
 
 /* hero: sayfa ilk açıldığında bir kez */
 @keyframes heroRise{from{opacity:0;transform:translate3d(0,16px,0)}to{opacity:1;transform:none}}
