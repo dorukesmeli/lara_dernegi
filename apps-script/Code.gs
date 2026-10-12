@@ -34,7 +34,7 @@
 
 const CONFIG = {
   /* İç bildirimin gideceği adres. Kurumsal adrese geçildiğinde yalnızca bunu değiştir. */
-  NOTIFY_TO: 'laradernegi@gmail.com',
+  NOTIFY_TO: 'info@laraassociation.org',
 
   SITE_URL: 'laraassociation.org',
   TIMEZONE: 'Europe/Istanbul',
