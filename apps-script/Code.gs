@@ -41,7 +41,7 @@ const CONFIG = {
 
   /* Gelen kutusunda görünecek gönderen adları */
   NOTIFY_SENDER_NAME: 'LARA Üyelik Formu',
-  CONFIRM_SENDER_NAME: { tr: 'LARA Derneği', en: 'LARA Derneği' },
+  CONFIRM_SENDER_NAME: { tr: 'LARA Derneği', en: 'LARA Association' },
 
   MIN_AGE: 18,
   MAX_AGE: 100,
