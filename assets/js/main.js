@@ -219,6 +219,19 @@
     document.head.appendChild(sc);
   }
 
+  /* Turnstile jetonu — widget yüklü değilse boş döner. */
+  function turnstileJetonu() {
+    var el = joinForm && joinForm.querySelector('[name="cf-turnstile-response"]');
+    return (el && el.value) ? el.value : '';
+  }
+
+  /* Jetonlar tek kullanımlıktır: her gönderimden sonra widget sıfırlanır,
+     böylece aynı jeton ikinci kez gönderilemez. */
+  function turnstileSifirla() {
+    if (!window.turnstile || !CFG.turnstileSiteKey) return;
+    try { window.turnstile.reset(); } catch (e) {}
+  }
+
   /* Aynı tarayıcıdan kısa sürede çok sayıda gönderimi sınırlar */
   function rateLimited() {
     var max = CFG.maxSubmitsPerHour || 3, now = Date.now(), list = [];
@@ -456,11 +469,13 @@
       motivation: ham('Motivasyon'),
       consentPrinciples: !!(p && p.checked),
       consentKvkk: !!(k && k.checked),
-      honey: ham('website')
+      honey: ham('website'),
+      turnstileToken: turnstileJetonu()
     };
   }
 
   function showSuccess() {
+    turnstileSifirla();
     joinWrap.hidden = true;
     joinOk.hidden = false;
     var kart = joinModal && joinModal.querySelector('.modal-card');
@@ -473,18 +488,30 @@
     return !!res && res.ok === true && res.internalNotificationSent === true && res.confirmationSent === true;
   }
 
-  function gonderimBasarisiz() {
-    setStatus(t('form.errBody'), 'err');
+  function gonderimBasarisiz(res) {
+    setStatus(hataMetni(res), 'err');
     sending = false;
     joinBtn.disabled = false;
     joinBtn.textContent = t('form.submit');
-    if (window.turnstile && CFG.turnstileSiteKey) { try { window.turnstile.reset(); } catch (e) {} }
+    turnstileSifirla();
   }
 
-  /* Analitik: sunucunun hata kodu → izin verilen hata türü */
+  /* Analitik: sunucunun hata kodu → izin verilen hata türü.
+     Turnstile reddi kullanıcının düzeltebileceği bir durumdur; 'validation' kovasına girer. */
   function hataTuru(res) {
-    var map = { VALIDATION: 'validation', CONFIRMATION_FAILED: 'confirmation_failed', INTERNAL_NOTIFICATION_FAILED: 'internal_notification_failed' };
+    var map = {
+      VALIDATION: 'validation', TURNSTILE_FAILED: 'validation', TURNSTILE_MISSING: 'validation',
+      CONFIRMATION_FAILED: 'confirmation_failed', INTERNAL_NOTIFICATION_FAILED: 'internal_notification_failed'
+    };
     return (res && map[res.error]) || 'unknown';
+  }
+
+  /* Sunucunun reddine göre kullanıcıya gösterilecek metin */
+  function hataMetni(res) {
+    var kod = res && res.error;
+    if (kod === 'TURNSTILE_FAILED' || kod === 'TURNSTILE_MISSING') return t('form.captchaNeeded');
+    if (kod === 'RATE_LIMIT') return t('form.tooMany');
+    return t('form.errBody');
   }
   function basvuruHatasi(tur) {
     izle('membership_application_error', { language: lang, error_type: tur });
@@ -534,7 +561,7 @@
       sonuc(false, 'timeout');
     }, CFG.timeoutMs || 45000);
 
-    function sonuc(basarili, hata) {
+    function sonuc(basarili, hata, res) {
       if (bitti) return;                       // zaman aşımından sonra gelen geç yanıtı yok say
       bitti = true;
       clearTimeout(zamanAsimi);
@@ -546,7 +573,7 @@
           izle('membership_application_success', { language: payload.lang, submission_id: payload.submissionId });
         }
       } else {
-        gonderimBasarisiz();
+        gonderimBasarisiz(res);
         izle('membership_application_error', { language: payload.lang, error_type: hata || 'unknown' });
       }
     }
@@ -562,7 +589,7 @@
       .then(function (r) {
         if (!r.ok) { sonuc(false, 'network'); return; }
         return r.json().then(
-          function (res) { var basarili = sunucuBasarili(res); sonuc(basarili, basarili ? null : hataTuru(res)); },
+          function (res) { var basarili = sunucuBasarili(res); sonuc(basarili, basarili ? null : hataTuru(res), res); },
           function () { sonuc(false, 'unknown'); }
         );
       })

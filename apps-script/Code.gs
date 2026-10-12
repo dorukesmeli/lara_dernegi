@@ -58,6 +58,25 @@ const CONFIG = {
   /* Kötüye kullanıma karşı tüm site için saatlik üst sınır (yeni başvurular) */
   MAX_APPLICATIONS_PER_HOUR: 30,
 
+  /* Cloudflare Turnstile — sunucu tarafı doğrulama.
+     Gizli anahtar KODDA TUTULMAZ: Proje Ayarları → Komut Dosyası Özellikleri'nde
+     TURNSTILE_SECRET_KEY adıyla saklanır.
+
+     REQUIRED yalnızca "jeton HİÇ gelmediğinde" ne yapılacağını belirler:
+       false → jeton yoksa başvuru kabul edilir (site anahtarı yayına alınmadan dağıtım için).
+       true  → jeton yoksa başvuru reddedilir.
+     Site anahtarı canlıya alınıp test edildikten sonra true yapılır.
+
+     Jeton GELDİYSE doğrulama hiçbir koşulda atlanmaz: Cloudflare reddederse,
+     gizli anahtar tanımlı değilse ya da Cloudflare'a ulaşılamazsa başvuru reddedilir
+     ve hiçbir mail gönderilmez. */
+  TURNSTILE: {
+    REQUIRED: false,
+    SECRET_PROPERTY: 'TURNSTILE_SECRET_KEY',
+    VERIFY_URL: 'https://challenges.cloudflare.com/turnstile/v0/siteverify',
+    MAX_TOKEN_LEN: 2048
+  },
+
   /* true iken hiçbir mail gönderilmez; oluşturulan mailler yalnızca günlüğe yazılır */
   DRY_RUN: false
 };
@@ -145,6 +164,16 @@ function handleSubmission_(raw, deps) {
     const r = result_(false, false, false, 'VALIDATION');
     r.fields = invalid;
     return r;
+  }
+
+  /* Turnstile — buradan geçemeyen başvuru hiçbir mail üretmez. */
+  const ts = verifyTurnstile_(d.turnstileToken, deps);
+  if (ts !== 'ok') {
+    const kod = (ts === 'MISSING') ? 'TURNSTILE_MISSING'
+              : (ts === 'FAILED')  ? 'TURNSTILE_FAILED'
+              : 'TURNSTILE_UNAVAILABLE';
+    log('submission_rejected', { submission_id: d.submissionId, reason: kod });
+    return result_(false, false, false, kod);
   }
 
   log('submission_received', { submission_id: d.submissionId, applicant_email: d.email, lang: d.lang });
@@ -334,7 +363,8 @@ function normalize_(raw) {
     interests: interests,
     motivation: cleanText_(raw.motivation, true),
     consentPrinciples: raw.consentPrinciples === true,
-    consentKvkk: raw.consentKvkk === true
+    consentKvkk: raw.consentKvkk === true,
+    turnstileToken: String(raw.turnstileToken || '').slice(0, CONFIG.TURNSTILE.MAX_TOKEN_LEN).trim()
   };
 }
 
@@ -517,6 +547,49 @@ function gizliReferans_(meta) {
     'opacity:0;color:transparent;visibility:hidden;">' + escapeHtml_(ref) + '</span>';
 }
 
+/* ---------------------------- TURNSTILE ----------------------------
+   Jeton Cloudflare'ın siteverify ucunda doğrulanır. Dönen değerler:
+     'ok'           → doğrulandı (ya da doğrulama kapalı ve jeton yok)
+     'MISSING'      → jeton yok, ama zorunlu
+     'FAILED'       → Cloudflare jetonu reddetti (geçersiz, süresi dolmuş ya da tekrar kullanılmış)
+     'UNAVAILABLE'  → gizli anahtar yok ya da Cloudflare'a ulaşılamadı
+   Jetonun kendisi ve gizli anahtar hiçbir günlüğe yazılmaz. */
+function verifyTurnstile_(token, deps) {
+  const cfg = CONFIG.TURNSTILE;
+
+  if (!token) return cfg.REQUIRED ? 'MISSING' : 'ok';
+
+  let secret = '';
+  try {
+    secret = deps.scriptProperty(cfg.SECRET_PROPERTY) || '';
+  } catch (err) {
+    deps.log('turnstile_error', { reason: 'PROPERTY_READ', error: errText_(err) });
+    return 'UNAVAILABLE';
+  }
+  if (!secret) {
+    deps.log('turnstile_error', { reason: 'SECRET_NOT_SET' });
+    return 'UNAVAILABLE';
+  }
+
+  let body;
+  try {
+    body = deps.fetchJson(cfg.VERIFY_URL, { secret: secret, response: token });
+  } catch (err) {
+    deps.log('turnstile_error', { reason: 'FETCH', error: errText_(err) });
+    return 'UNAVAILABLE';
+  }
+
+  if (!body || typeof body !== 'object') {
+    deps.log('turnstile_error', { reason: 'BAD_RESPONSE' });
+    return 'UNAVAILABLE';
+  }
+  if (body.success === true) return 'ok';
+
+  // Cloudflare'ın hata kodları jeton içermez; günlüğe yazmak güvenlidir.
+  deps.log('turnstile_rejected', { codes: (body['error-codes'] || []).join(',') });
+  return 'FAILED';
+}
+
 function escapeHtml_(s) {
   return String(s)
     .replace(/&/g, '&amp;')
@@ -568,6 +641,21 @@ function defaultDeps_() {
     mail: {
       send: function (message) { MailApp.sendEmail(message); },
       remaining: function () { return MailApp.getRemainingDailyQuota(); }
+    },
+    scriptProperty: function (name) {
+      return PropertiesService.getScriptProperties().getProperty(name);
+    },
+    fetchJson: function (url, payload) {
+      const res = UrlFetchApp.fetch(url, {
+        method: 'post',
+        payload: payload,                 // application/x-www-form-urlencoded
+        muteHttpExceptions: true,
+        followRedirects: true
+      });
+      if (res.getResponseCode() !== 200) {
+        throw new Error('HTTP ' + res.getResponseCode());
+      }
+      return JSON.parse(res.getContentText());
     }
   };
 }
@@ -580,9 +668,26 @@ function defaultDeps_() {
    kişisel bir adresi repoya yazma. */
 const TEST_TEYIT_ADRESI = '';
 
+/* Editör testleri tarayıcıdan geçmediği için Turnstile jetonu üretemez.
+   Bu yüzden testlerde doğrulama bilerek atlanır; testi çalıştıran zaten hesabın sahibidir.
+   Canlı akış (doPost) her zaman gerçek doğrulamayı kullanır. */
+function testDeps_() {
+  const deps = defaultDeps_();
+  deps.scriptProperty = function () { return 'test'; };
+  deps.fetchJson = function () { return { success: true }; };
+  return deps;
+}
+
+/* Gizli anahtarın tanımlı olup olmadığını gösterir. Anahtarın DEĞERİNİ yazmaz. */
+function testTurnstileAyari() {
+  const v = PropertiesService.getScriptProperties().getProperty(CONFIG.TURNSTILE.SECRET_PROPERTY);
+  console.log(CONFIG.TURNSTILE.SECRET_PROPERTY + ' tanımlı mı: ' + (v ? 'EVET (' + v.length + ' karakter)' : 'HAYIR'));
+  console.log('Doğrulama zorunlu (REQUIRED): ' + CONFIG.TURNSTILE.REQUIRED);
+}
+
 /** Mail GÖNDERMEZ. Örnek başvuruyu doğrular, iki maili oluşturup Yürütme günlüğüne yazar. */
 function testKuruCalisma() {
-  const deps = defaultDeps_();
+  const deps = testDeps_();
   deps.dryRun = true;
   const r = handleSubmission_(ornekBasvuru_('tr', 'kuru-' + Date.now()), deps);
   console.log('Sonuç: ' + JSON.stringify({ ok: r.ok, dryRun: r.dryRun, error: r.error, fields: r.fields }));
@@ -590,7 +695,7 @@ function testKuruCalisma() {
 
 /** Mail GÖNDERMEZ. Hatalı bir başvurunun reddedildiğini gösterir. */
 function testHataliBasvuru() {
-  const deps = defaultDeps_();
+  const deps = testDeps_();
   deps.dryRun = true;
   const kotu = ornekBasvuru_('tr', 'hatali-' + Date.now());
   kotu.email = 'gecersiz-adres';
@@ -604,7 +709,7 @@ function testGercekGonderim() {
   const ornek = ornekBasvuru_('tr', 'test-' + Date.now());
   ornek.email = CONFIG.NOTIFY_TO;
   ornek.motivation = 'Test gönderimi ' + new Date().toISOString();
-  console.log('Sonuç: ' + JSON.stringify(handleSubmission_(ornek)));
+  console.log('Sonuç: ' + JSON.stringify(handleSubmission_(ornek, testDeps_())));
 }
 
 /** GERÇEK MAİL GÖNDERİR — Türkçe teyit maili TEST_TEYIT_ADRESI'ne gider (canlıdaki gerçek yol). */
@@ -625,7 +730,7 @@ function hariciTeyitGonder_(lang) {
   const ornek = ornekBasvuru_(lang, 'harici-' + lang + '-' + Date.now());
   ornek.email = TEST_TEYIT_ADRESI;
   ornek.motivation = 'Harici teyit testi (' + lang + ') ' + new Date().toISOString();
-  console.log('Sonuç (' + lang + '): ' + JSON.stringify(handleSubmission_(ornek)));
+  console.log('Sonuç (' + lang + '): ' + JSON.stringify(handleSubmission_(ornek, testDeps_())));
 }
 
 /** Mail GÖNDERMEZ. Kalan günlük mail kotasını yazar. */

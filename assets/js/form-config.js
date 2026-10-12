@@ -9,13 +9,19 @@
 window.LARA_FORM = {
 
   /* Google Apps Script Web App adresi (…/exec ile biter). Gizli değildir. */
-  appsScriptUrl: "https://script.google.com/macros/s/AKfycbwp8mysEWAYSXiQbAMuPHI7sRWqKep6DFeGFyn7ww68OotDUyHNq17bp0FyzpMN04xq/exec",
+  appsScriptUrl: "https://script.google.com/macros/s/AKfycbzDsDwd7wbQL88bT3zU3tp0orTw6-p9OrQZm200TUZwqnnZycSSjmOL8XDThkT2mwdP/exec",
 
   /* Sunucu bu süre içinde yanıt vermezse hata mesajı gösterilir (milisaniye) */
   timeoutMs: 45000,
 
-  /* İsteğe bağlı Cloudflare Turnstile açık site anahtarı. Gizli anahtar buraya yazılmaz. */
-  turnstileSiteKey: "",
+  /* Cloudflare Turnstile AÇIK site anahtarı — "LARA Membership Form" widget'ı.
+     Herkese açıktır, sayfa kaynağında görünür; sakıncası yoktur.
+     Yalnızca laraassociation.org alan adında geçerlidir.
+     Boş bırakılırsa widget yüklenmez ve form doğrulamasız çalışır.
+
+     GİZLİ ANAHTAR (Secret Key) BURAYA YAZILMAZ. O, Apps Script tarafında
+     Script Properties içinde TURNSTILE_SECRET_KEY adıyla saklanır. */
+  turnstileSiteKey: "0x4AAAAAAFUtjBfJNRjWw6eD",
 
   /* Aynı tarayıcıdan saatte en fazla kaç başvuru gönderilebilir */
   maxSubmitsPerHour: 3

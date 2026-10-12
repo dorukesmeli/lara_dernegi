@@ -51,7 +51,7 @@ Telefon, doğum tarihi ve motivasyon metni günlüğe yazılmaz. **Teyit maili g
 
 ## İlk kurulum
 
-1. Yalnızca `laradernegi@gmail.com` hesabının açık olduğu bir pencerede **script.google.com → Yeni proje**.
+1. Yalnızca `info@laraassociation.org` hesabının açık olduğu bir pencerede **script.google.com → Yeni proje**.
 2. **⚙ Proje Ayarları** → "appsscript.json manifest dosyasını düzenleyicide göster".
 3. `Code.gs` ve `appsscript.json` içeriklerini bu klasördekilerle tamamen değiştir → **Kaydet**.
 4. `testKuruCalisma` → **Çalıştır** → yetkilendir (Gelişmiş → projeye git → İzin ver).
@@ -66,7 +66,7 @@ Kodu kaydetmek canlı Web App'i **güncellemez**. Değişiklikten sonra:
 
 Böylece URL **aynı kalır**. "Yeni dağıtım" yeni bir URL oluşturur; kullanma.
 
-Dağıtım penceresinde **"Şu kullanıcı olarak çalıştır"** satırında `laradernegi@gmail.com`
+Dağıtım penceresinde **"Şu kullanıcı olarak çalıştır"** satırında `info@laraassociation.org`
 yazdığını kontrol et. Başka bir hesap yazıyorsa mailler o hesaptan gider.
 
 ## Editör testleri
@@ -81,7 +81,8 @@ yazdığını kontrol et. Başka bir hesap yazıyorsa mailler o hesaptan gider.
 
 ## Bilmen gerekenler
 
-- **Günlük kota:** Kişisel Gmail hesabı günde yaklaşık 100 alıcıya mail gönderebilir; her başvuru 2 mail → günde ~50 başvuru.
+- **Günlük kota:** Google Workspace hesabı günde yaklaşık 1.500 alıcıya mail gönderebilir; her başvuru 2 mail → günde ~750 başvuru.
+  (Betik kişisel bir Gmail hesabında çalışıyorsa bu sınır ~100 alıcı, yani ~50 başvurudur.)
   Kota iki mail için yetmiyorsa başvuru hiç işlenmez ve `QUOTA` döner (yarım kalmaz).
 - **Saatlik sınır:** Tüm site için saatte en fazla 30 yeni başvuru (`CONFIG.MAX_APPLICATIONS_PER_HOUR`).
 - **Alıcı adres:** `Code.gs` → `CONFIG.NOTIFY_TO`. Değiştirdikten sonra yeni sürüm yayınla.
