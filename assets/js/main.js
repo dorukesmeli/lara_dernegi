@@ -195,7 +195,9 @@
   var CFG = window.LARA_FORM || {};
   var sending = false;        // çift gönderimi engeller
   var formOpenedAt = 0;       // form açılır açılmaz gelen gönderimler kısa süre bekletilir
-  var turnstileReady = false;
+  var turnstileReady = false;      // Cloudflare betiği sayfaya eklendi mi
+  var turnstileApiHazir = false;   // betik yüklendi ve turnstile.render kullanılabilir mi
+  var turnstileWidgetId = null;    // çizilen widget'ın kimliği (reset için gerekir)
   var submissionId = null;    // aynı başvurunun yeniden denemelerinde aynı kalır (sunucuda tekrar koruması)
   var basariIzlendi = {};     // başarı olayı her başvuru kimliği için yalnızca bir kez gönderilir
 
@@ -206,17 +208,44 @@
     return h.slice(0, 8) + '-' + h.slice(8, 12) + '-' + h.slice(12, 16) + '-' + h.slice(16, 20) + '-' + h.slice(20);
   }
 
-  /* Cloudflare Turnstile — sadece form-config.js'de site anahtarı varsa yüklenir. */
+  /* Cloudflare Turnstile — sadece form-config.js'de site anahtarı varsa yüklenir.
+
+     Widget AÇIKÇA çizilir (render=explicit). Kendiliğinden çizim kullanılamaz:
+     widget'ın kutusu formun üçüncü adımındadır ve sayfa açılırken o adım gizlidir.
+     Cloudflare gizli bir kutuya çerçeveyi yerleştirmez ve kutu sonradan görünür
+     olduğunda yeniden denemez; jeton hiçbir zaman üretilmez. Bu yüzden çizim,
+     üçüncü adım açıldığı anda elle başlatılır. */
   function initTurnstile() {
     var box = document.getElementById('turnstileBox');
     if (!box || !CFG.turnstileSiteKey || turnstileReady) return;
     turnstileReady = true;
     box.hidden = false;
-    box.setAttribute('data-sitekey', CFG.turnstileSiteKey);
     var sc = document.createElement('script');
-    sc.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+    sc.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=laraTurnstileHazir';
     sc.async = true; sc.defer = true;
     document.head.appendChild(sc);
+  }
+
+  /* Cloudflare betiği hazır olduğunda çağrılır. Kullanıcı o sırada son adımdaysa
+     widget hemen çizilir; değilse adıma gelindiğinde çizilecek. */
+  window.laraTurnstileHazir = function () {
+    turnstileApiHazir = true;
+    if (formAdimi === ADIM_SAYISI) turnstileCiz();
+  };
+
+  /* Widget'ı çizer. Yalnızca kutu gerçekten görünürken çalışır ve bir kez çizer. */
+  function turnstileCiz() {
+    var box = document.getElementById('turnstileBox');
+    if (!box || !CFG.turnstileSiteKey) return;
+    if (turnstileWidgetId !== null) return;              // zaten çizili
+    if (!turnstileApiHazir || !window.turnstile || !window.turnstile.render) return;
+    if (!box.offsetParent) return;                       // kutu hâlâ gizliyse bekle
+    try {
+      turnstileWidgetId = window.turnstile.render(box, {
+        sitekey: CFG.turnstileSiteKey,
+        language: (lang === 'en') ? 'en' : 'tr'
+      });
+    } catch (e) {}
   }
 
   /* Turnstile jetonu — widget yüklü değilse boş döner. */
@@ -228,8 +257,8 @@
   /* Jetonlar tek kullanımlıktır: her gönderimden sonra widget sıfırlanır,
      böylece aynı jeton ikinci kez gönderilemez. */
   function turnstileSifirla() {
-    if (!window.turnstile || !CFG.turnstileSiteKey) return;
-    try { window.turnstile.reset(); } catch (e) {}
+    if (!window.turnstile || !CFG.turnstileSiteKey || turnstileWidgetId === null) return;
+    try { window.turnstile.reset(turnstileWidgetId); } catch (e) {}
   }
 
   /* Aynı tarayıcıdan kısa sürede çok sayıda gönderimi sınırlar */
@@ -391,6 +420,7 @@
     if (geriBtn) geriBtn.hidden = n === 1;
     if (ileriBtn) ileriBtn.hidden = n === ADIM_SAYISI;
     if (joinBtn) joinBtn.hidden = n !== ADIM_SAYISI;
+    if (n === ADIM_SAYISI) turnstileCiz();   // widget yalnızca görünür olduğunda çizilebilir
     if (!degisti) return;
     if (adimDuyuru) {
       var etiket = adimGostergesi[n - 1] ? adimGostergesi[n - 1].querySelector('.fp-label').textContent : '';
