@@ -124,7 +124,7 @@ tr: {
 "goals.t5":"Sürdürülebilir Ortaklıklar","goals.t6":"Herkes İçin Fırsat","goals.t7":"Gönüllülük ve Kapsayıcılık","goals.t8":"Avrupa Değerleri",
 "footer.meta1":"Antalya, Türkiye · Kütük No: 07-046-100",
 "contact.lSocial":"Instagram","social.ig":"LARA Derneği Instagram hesabı (yeni sekmede açılır)",
-"footer.officialTitle":"Resmî Kurum Bilgileri","footer.fName":"Resmî Kurum Adı","footer.fReg":"Dernek Kütük No","footer.fAdmin":"Super Admin E-posta","footer.fDomain":"Google Workspace Domain","footer.fAddr":"Merkez Adresi",
+"footer.officialTitle":"Resmî Kurum Bilgileri","footer.fName":"Resmî Kurum Adı","footer.fReg":"Dernek Kütük No","footer.fAdmin":"Kurumsal E-posta","footer.fDomain":"Google Workspace Domain","footer.fAddr":"Merkez Adresi",
 "footer.official":"laraassociation.org, LARA Derneği'nin resmî internet sitesidir.",
 "footer.about":"Antalya merkezli bir gençlik derneği olarak gençlik çalışmaları ve uluslararası hareketlilik projeleriyle gençlerin gelişimini destekliyoruz.","footer.explore":"Keşfet","footer.assoc":"Dernek","footer.registry":"Kütük No: 07-046-100","footer.rights":"LARA Derneği. Tüm hakları saklıdır."
 },
@@ -251,7 +251,7 @@ en: {
 "goals.t5":"Sustainable Partnerships","goals.t6":"Opportunity for All","goals.t7":"Volunteering and Inclusion","goals.t8":"European Values",
 "footer.meta1":"Antalya, Türkiye · Registry No: 07-046-100",
 "contact.lSocial":"Instagram","social.ig":"LARA Derneği on Instagram (opens in a new tab)",
-"footer.officialTitle":"Official Organization Details","footer.fName":"Official Organization Name","footer.fReg":"Association Registration No","footer.fAdmin":"Super Admin Email","footer.fDomain":"Google Workspace Domain","footer.fAddr":"Registered Address",
+"footer.officialTitle":"Official Organization Details","footer.fName":"Official Organization Name","footer.fReg":"Association Registration No","footer.fAdmin":"Official Email","footer.fDomain":"Google Workspace Domain","footer.fAddr":"Registered Address",
 "footer.official":"laraassociation.org is the official website of LARA Derneği.",
 "footer.about":"A youth association based in Antalya, supporting young people’s development through youth work and international mobility projects.","footer.explore":"Explore","footer.assoc":"Association","footer.registry":"Registry No: 07-046-100","footer.rights":"LARA Derneği. All rights reserved."
 }
