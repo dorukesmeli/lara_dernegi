@@ -21,7 +21,8 @@
  *
  *  GÜVENLİK
  *  - Bu dosyada şifre, App Password, OAuth token veya secret YOKTUR.
- *  - Web App "Execute as: Me" ile yayınlanır; mailler script sahibinin hesabından gider.
+ *  - Web App "Execute as: Me" ile yayınlanır; mailler GmailApp ile script sahibinin
+ *    hesabından (info@laraassociation.org) gider.
  *  - Alıcı adres ASLA tarayıcıdan alınmaz. İç bildirim yalnızca CONFIG.NOTIFY_TO'ya,
  *    teyit maili yalnızca doğrulanmış başvuru sahibine gider; içerikler sabit şablondur.
  *  - Kullanıcı verisi temizlenir ve HTML-escape edilir; HTML/JS enjekte edilemez.
@@ -638,8 +639,18 @@ function defaultDeps_() {
       const entry = JSON.stringify(Object.assign({ event: event }, data || {}));
       if (event.indexOf('error') !== -1) console.error(entry); else console.log(entry);
     },
+    /* Gönderim GmailApp ile yapılır. MailApp ile gönderilen postalar alıcı tarafından
+       reddediliyordu ("Message rejected"); aynı hesaptan GmailApp ile gönderilen aynı
+       içerik sorunsuz teslim ediliyor. Kalan kota bilgisi iki yolda da ortaktır,
+       bu yüzden MailApp.getRemainingDailyQuota kullanılmaya devam eder.
+       GmailApp.sendEmail konumsal parametre alır; aşağıdaki sarmalayıcı, çağıran
+       koddaki mesaj nesnesini olduğu gibi bırakmak için dönüşümü burada yapar. */
     mail: {
-      send: function (message) { MailApp.sendEmail(message); },
+      send: function (message) {
+        const options = { htmlBody: message.htmlBody, name: message.name };
+        if (message.replyTo) options.replyTo = message.replyTo;
+        GmailApp.sendEmail(message.to, message.subject, message.body, options);
+      },
       remaining: function () { return MailApp.getRemainingDailyQuota(); }
     },
     scriptProperty: function (name) {
