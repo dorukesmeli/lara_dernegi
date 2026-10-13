@@ -117,7 +117,8 @@
     if (!card) return;
     modal.dataset.person = id;
     bioName.textContent   = card.dataset.name || '';
-    bioRole.innerHTML     = t('bio.' + id + '.role') || '';
+    /* Unvan kartla aynı anahtardan okunur; iki yerde ayrı unvan tutulmaz. */
+    bioRole.innerHTML     = t('team.r.' + id) || '';
     bioBody.innerHTML     = t('bio.' + id + '.body') || '';
     var big = card.dataset.photoLg || card.dataset.photo;
     if (big) {
