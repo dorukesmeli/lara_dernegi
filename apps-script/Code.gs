@@ -66,13 +66,13 @@ const CONFIG = {
      REQUIRED yalnızca "jeton HİÇ gelmediğinde" ne yapılacağını belirler:
        false → jeton yoksa başvuru kabul edilir (site anahtarı yayına alınmadan dağıtım için).
        true  → jeton yoksa başvuru reddedilir.
-     Site anahtarı canlıya alınıp test edildikten sonra true yapılır.
+     Site anahtarı canlıda doğrulandıktan sonra true yapıldı (13.10.2026).
 
      Jeton GELDİYSE doğrulama hiçbir koşulda atlanmaz: Cloudflare reddederse,
      gizli anahtar tanımlı değilse ya da Cloudflare'a ulaşılamazsa başvuru reddedilir
      ve hiçbir mail gönderilmez. */
   TURNSTILE: {
-    REQUIRED: false,
+    REQUIRED: true,
     SECRET_PROPERTY: 'TURNSTILE_SECRET_KEY',
     VERIFY_URL: 'https://challenges.cloudflare.com/turnstile/v0/siteverify',
     MAX_TOKEN_LEN: 2048
