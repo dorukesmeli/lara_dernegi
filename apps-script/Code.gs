@@ -27,6 +27,19 @@
  *    teyit maili yalnızca doğrulanmış başvuru sahibine gider; içerikler sabit şablondur.
  *  - Kullanıcı verisi temizlenir ve HTML-escape edilir; HTML/JS enjekte edilemez.
  *  - Günlüklere telefon, doğum tarihi veya motivasyon metni yazılmaz.
+ *
+ *  GOOGLE SHEETS
+ *  - Başarılı her yeni başvuru "LARA | Üye Başvuru ve Takip Sistemi" tablosuna
+ *    tek satır olarak eklenir. Tablo kimliği kodda DEĞİL, SHEET_ID script
+ *    özelliğinde tutulur.
+ *  - Yazma, maillerden ÖNCE yapılır: böylece Gmail ve Sheets birbirinden bağımsız
+ *    iki yedek olur. Biri çökerse başvuru diğerinde durur.
+ *  - Sheets hatası başvuruyu reddetmez; yalnızca iç bildirimin konusuna
+ *    [TABLOYA YAZILAMADI] eklenir, yönetim satırı elle girer.
+ *  - Mükerrer kayıt, tablodaki Başvuru Kimliği sütunundan engellenir (önbellekten
+ *    değil) — bu yüzden 6 saatlik önbellek ömründen bağımsızdır.
+ *  - Otomasyon yalnızca satır EKLER. Ödeme/üyelik alanları ilk satırda varsayılanla
+ *    yazılır, sonrasında hiçbir koşulda güncellenmez.
  * ============================================================================
  */
 
@@ -76,6 +89,79 @@ const CONFIG = {
     SECRET_PROPERTY: 'TURNSTILE_SECRET_KEY',
     VERIFY_URL: 'https://challenges.cloudflare.com/turnstile/v0/siteverify',
     MAX_TOKEN_LEN: 2048
+  },
+
+  /* Google Sheets takip tablosu.
+     Tablo kimliği KODDA TUTULMAZ: Proje Ayarları → Komut Dosyası Özellikleri'nde
+     SHEET_ID adıyla saklanır.
+
+     Acil durdurma: SHEETS_ENABLED özelliğine 'false' yazmak Sheets yazımını anında
+     durdurur, mailler çalışmaya devam eder ve YENİDEN DAĞITIM GEREKTİRMEZ. */
+  SHEETS: {
+    ID_PROPERTY: 'SHEET_ID',
+    ENABLED_PROPERTY: 'SHEETS_ENABLED',
+    SAYFA: 'Üyelik Başvuruları',
+    AKTIF_SAYFA: 'Aktif Üyeler',
+
+    /* Sütun başlıkları. Satır yazılırken sütun sırası DEĞİL başlık adı esas alınır;
+       yönetim araya sütun eklerse ya da sırayı değiştirirse yanlış hücreye yazılmaz. */
+    BASLIK: {
+      TARIH:        'Başvuru Tarihi',
+      KIMLIK:       'Başvuru Kimliği',
+      AD:           'Ad Soyad',
+      EPOSTA:       'E-posta',
+      TELEFON:      'Telefon',
+      DOGUM:        'Doğum Tarihi',
+      YAS:          'Yaş',
+      SEHIR:        'Şehir',
+      MESLEK:       'Meslek / Bölüm',
+      DILLER:       'Yabancı Diller',
+      DENEYIM:      'Proje Deneyimi',
+      ILGI:         'İlgi Alanları',
+      MOTIVASYON:   'Motivasyon',
+      ILKELER:      'İlkeler Onayı',
+      KVKK:         'KVKK Onayı',
+      FORM_DILI:    'Form Dili',
+      ODEME_DURUM:  'Ödeme Durumu',
+      ODEME_TARIH:  'Ödeme Tarihi',
+      ODEME_TUTAR:  'Ödeme Tutarı',
+      UYELIK_DURUM: 'Üyelik Durumu',
+      KARAR_TARIH:  'Karar Tarihi',
+      UYELIK_TARIH: 'Üyelik Tarihi',
+      NOT:          'Yönetim Notu',
+      KAYNAK:       'Kayıt Kaynağı'
+    },
+
+    /* Soldan sağa sütun sırası (kurulum bu sırayla yazar) */
+    SIRA: ['TARIH', 'KIMLIK', 'AD', 'EPOSTA', 'TELEFON', 'DOGUM', 'YAS', 'SEHIR',
+           'MESLEK', 'DILLER', 'DENEYIM', 'ILGI', 'MOTIVASYON', 'ILKELER', 'KVKK',
+           'FORM_DILI', 'ODEME_DURUM', 'ODEME_TARIH', 'ODEME_TUTAR', 'UYELIK_DURUM',
+           'KARAR_TARIH', 'UYELIK_TARIH', 'NOT', 'KAYNAK'],
+
+    /* Otomasyonun yazdığı sütunlar — biri eksikse yazma yapılmaz (yanlış hücreye
+       yazmaktansa durmak güvenlidir). Yönetimin elle doldurduğu tarih/tutar/not
+       sütunları burada YOKTUR; otomasyon onlara hiç dokunmaz. */
+    ZORUNLU: ['TARIH', 'KIMLIK', 'AD', 'EPOSTA', 'TELEFON', 'DOGUM', 'YAS', 'SEHIR',
+              'MESLEK', 'DILLER', 'DENEYIM', 'ILGI', 'MOTIVASYON', 'ILKELER', 'KVKK',
+              'FORM_DILI', 'ODEME_DURUM', 'UYELIK_DURUM', 'KAYNAK'],
+
+    /* Yeni satırda yazılan başlangıç değerleri. Yalnızca EKLEME anında yazılır. */
+    VARSAYILAN: { ODEME: 'Beklemede', UYELIK: 'Başvuru Alındı', KAYNAK: 'Web formu' },
+
+    ODEME_SECENEKLERI:  ['Beklemede', 'Ödendi', 'Ödenmedi', 'Muaf', 'İade Edildi'],
+    UYELIK_SECENEKLERI: ['Başvuru Alındı', 'İnceleniyor', 'Yönetim Onayı Bekliyor',
+                         'Onaylandı', 'Reddedildi', 'Üyelikten Ayrıldı'],
+
+    /* Aktif Üyeler sayfasında gösterilecek sütunlar (soldan sağa) */
+    AKTIF_SUTUNLAR: ['KIMLIK', 'AD', 'TELEFON', 'EPOSTA', 'SEHIR', 'UYELIK_TARIH'],
+    AKTIF_FILTRE: { ODEME: 'Ödendi', UYELIK: 'Onaylandı' },
+
+    /* Kurulumun hazırladığı satır sayısı (açılır liste ve biçimler bu kadar satıra uygulanır) */
+    HAZIRLIK_SATIR: 2000,
+
+    /* Sayfa 1'de sola sabitlenen sütun sayısı: Başvuru Tarihi + Kimlik + Ad Soyad.
+       Sağa kaydırırken kimin satırına baktığın kaybolmasın diye. */
+    DONMUS_SUTUN: 3
   },
 
   /* true iken hiçbir mail gönderilmez; oluşturulan mailler yalnızca günlüğe yazılır */
@@ -204,13 +290,6 @@ function handleSubmission_(raw, deps) {
     const isNew = !state;
     state = state || { internal: false, confirmation: false };
 
-    if (state.internal && state.confirmation) {
-      log('duplicate_submission', { submission_id: sid });
-      const dup = result_(true, true, true);
-      dup.duplicate = true;
-      return dup;
-    }
-
     const hourKey = 'rate:' + deps.formatDate(deps.now, 'yyyyMMddHH');
     const hourCount = Number(cache.get(hourKey) || 0);
     if (isNew && hourCount >= CONFIG.MAX_APPLICATIONS_PER_HOUR) {
@@ -223,7 +302,32 @@ function handleSubmission_(raw, deps) {
       receivedAt: deps.formatDate(deps.now, 'dd.MM.yyyy HH:mm'),
       age: ageOf_(d.birthDate, deps)
     };
-    const notice = buildNotification_(d, meta);
+    /* Sheets yazımı maillerden ÖNCE: Gmail ile Sheets birbirinden bağımsız iki yedek
+       olsun diye. Hata burada ASLA başvuruyu reddetmez; yalnızca iç bildirimin konusu
+       işaretlenir ve yanıtta sheetSaved:false döner. */
+    const sheetDurum = deps.dryRun ? 'dryrun' : kaydetSheets_(d, meta, deps);
+    const tabloSorunlu = (sheetDurum === 'error');
+    const sheetYazildi = (sheetDurum === 'ok' || sheetDurum === 'duplicate');
+
+    /* Yanıta Sheets durumunu ekler. Site yalnızca ok/internal/confirmation üçlüsüne
+       baktığı için bu alan form akışını etkilemez. */
+    function son_(r) {
+      if (sheetDurum !== 'dryrun') r.sheetSaved = sheetYazildi;
+      return r;
+    }
+
+    /* Her iki mail de gitmişse YENİ MAİL ÜRETİLMEZ — mükerrer e-posta olmaz.
+       Bu kontrol bilerek Sheets yazımından SONRA yapılır: ilk denemede tabloya
+       yazılamadıysa, tekrar gelen aynı başvuru eksik satırı tamamlayabilsin.
+       Mükerrer satırı tablodaki Başvuru Kimliği kontrolü engeller. */
+    if (state.internal && state.confirmation) {
+      log('duplicate_submission', { submission_id: sid, sheet: sheetDurum });
+      const dup = son_(result_(true, true, true));
+      dup.duplicate = true;
+      return dup;
+    }
+
+    const notice = buildNotification_(d, meta, tabloSorunlu);
     const confirm = buildConfirmation_(d, meta);
 
     if (deps.dryRun) {
@@ -243,7 +347,7 @@ function handleSubmission_(raw, deps) {
     const needed = (state.internal ? 0 : 1) + (state.confirmation ? 0 : 1);
     if (deps.mail.remaining() < needed) {
       log('submission_rejected', { submission_id: sid, reason: 'QUOTA' });
-      return result_(false, state.internal, state.confirmation, 'QUOTA');
+      return son_(result_(false, state.internal, state.confirmation, 'QUOTA'));
     }
 
     // 1) İç bildirim — yalnızca daha önce gitmediyse
@@ -260,7 +364,7 @@ function handleSubmission_(raw, deps) {
         });
       } catch (err) {
         log('internal_notification_error', { submission_id: sid, error: errText_(err) });
-        return result_(false, false, false, 'INTERNAL_NOTIFICATION_FAILED');
+        return son_(result_(false, false, false, 'INTERNAL_NOTIFICATION_FAILED'));
       }
       state.internal = true;
       writeState_(cache, sid, state, log);
@@ -281,13 +385,13 @@ function handleSubmission_(raw, deps) {
       });
     } catch (err) {
       log('confirmation_error', { submission_id: sid, confirmation_recipient: d.email, error: errText_(err) });
-      return result_(false, true, false, 'CONFIRMATION_FAILED');
+      return son_(result_(false, true, false, 'CONFIRMATION_FAILED'));
     }
     state.confirmation = true;
     writeState_(cache, sid, state, log);
     log('confirmation_sent', { submission_id: sid, confirmation_recipient: d.email });
 
-    return result_(true, true, true);
+    return son_(result_(true, true, true));
   } finally {
     deps.lock.releaseLock();
   }
@@ -427,8 +531,12 @@ function fingerprintSource_(d) {
 
 /* ============================ E-POSTALAR ============================ */
 
-function buildNotification_(d, meta) {
+function buildNotification_(d, meta, tabloSorunlu) {
   const intro = 'Yeni bir LARA Derneği üyelik başvurusu alınmıştır.';
+  /* Sheets'e yazılamadıysa bu mail başvurunun TEK kaydıdır; yönetim görsün. */
+  const uyari = tabloSorunlu
+    ? 'DİKKAT: Bu başvuru takip tablosuna yazılamadı. Aşağıdaki bilgileri tabloya elle ekleyiniz.'
+    : '';
   const source = 'Bu başvuru ' + CONFIG.SITE_URL + ' üzerindeki üyelik formundan gönderilmiştir.';
   const onaylar =
     (d.consentPrinciples ? '18 yaşından büyük ve ilkeleri benimsiyor ✓' : '✗') + ' · ' +
@@ -451,7 +559,7 @@ function buildNotification_(d, meta) {
     ['Başvuru Kimliği', meta.submissionId]
   ];
 
-  const text = intro + '\n\n' +
+  const text = (uyari ? uyari + '\n\n' : '') + intro + '\n\n' +
     rows.map(function (r) { return r[0] + ': ' + r[1]; }).join('\n') +
     '\n\n' + source;
 
@@ -472,6 +580,7 @@ function buildNotification_(d, meta) {
       '<div style="max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #E1E9EF;border-radius:14px;padding:28px;">' +
         '<p style="margin:0 0 4px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#FF684D;font-weight:bold;">LARA Derneği</p>' +
         '<h2 style="margin:0 0 8px;font-size:19px;color:#0B2D52;">Yeni Üyelik Başvurusu</h2>' +
+        (uyari ? '<p style="margin:0 0 14px;padding:10px 12px;border-radius:8px;background:#FFF1EE;border:1px solid #FF684D;font-size:14px;color:#A02F18;"><strong>' + escapeHtml_(uyari) + '</strong></p>' : '') +
         '<p style="margin:0 0 18px;font-size:14px;color:#44546A;">' + escapeHtml_(intro) + '</p>' +
         '<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;font-size:14px;line-height:1.5;">' +
           htmlRows +
@@ -481,7 +590,7 @@ function buildNotification_(d, meta) {
     '</div>';
 
   return {
-    subject: headerSafe_('Yeni Üyelik Başvurusu – ' + d.fullName),
+    subject: headerSafe_((tabloSorunlu ? '[TABLOYA YAZILAMADI] ' : '') + 'Yeni Üyelik Başvurusu – ' + d.fullName),
     text: text,
     html: html
   };
@@ -547,6 +656,144 @@ function gizliReferans_(meta) {
   return '<span style="display:none !important;font-size:0;line-height:0;max-height:0;' +
     'opacity:0;color:transparent;visibility:hidden;">' + escapeHtml_(ref) + '</span>';
 }
+
+/* ---------------------------- GOOGLE SHEETS ----------------------------
+   Takip tablosuna tek satır ekler. Üç kural:
+     1) Yalnızca EKLER. Mevcut hiçbir satırı güncellemez, silmez, sıralamaz.
+        Yönetimin ödeme/üyelik alanlarına yazdıkları bu yüzden ezilemez.
+     2) Sütunu BAŞLIK ADIYLA bulur, sabit harfle değil. Araya sütun eklenirse
+        ya da sıra değişirse yanlış hücreye yazmaz; başlık eksikse hiç yazmaz.
+     3) Mükerrer kaydı tablodaki Başvuru Kimliği sütunundan engeller. Önbelleğe
+        bağlı olmadığı için 6 saatlik CacheService ömründen etkilenmez.
+   Dönüş: 'ok' | 'duplicate' | 'disabled' | 'error'
+   Hiçbir durumda istisna fırlatmaz — Sheets sorunu başvuruyu düşürmemelidir. */
+function kaydetSheets_(d, meta, deps) {
+  const S = CONFIG.SHEETS;
+  let sayfa;
+
+  try {
+    if (!deps.sheets || !deps.sheets.etkin()) {
+      deps.log('sheet_skipped', { submission_id: meta.submissionId, reason: 'DISABLED' });
+      return 'disabled';
+    }
+    sayfa = deps.sheets.sayfa();
+  } catch (err) {
+    deps.log('sheet_error', { submission_id: meta.submissionId, reason: 'OPEN', error: errText_(err) });
+    return 'error';
+  }
+  if (!sayfa) {
+    deps.log('sheet_error', { submission_id: meta.submissionId, reason: 'SHEET_NOT_FOUND' });
+    return 'error';
+  }
+
+  try {
+    const sonSatir = sayfa.getLastRow();
+    const sutunSayisi = Math.max(sayfa.getLastColumn(), S.SIRA.length);
+    const basliklar = sayfa.getRange(1, 1, 1, sutunSayisi).getValues()[0];
+
+    // başlık adı -> 0 tabanlı sütun indeksi
+    const harita = {};
+    basliklar.forEach(function (b, i) {
+      const ad = String(b === null || b === undefined ? '' : b).trim();
+      if (ad && !(ad in harita)) harita[ad] = i;
+    });
+
+    const eksik = S.ZORUNLU.filter(function (k) { return !(S.BASLIK[k] in harita); })
+                           .map(function (k) { return S.BASLIK[k]; });
+    if (eksik.length) {
+      deps.log('sheet_error', { submission_id: meta.submissionId, reason: 'HEADERS_MISSING', headers: eksik.join(',') });
+      return 'error';
+    }
+
+    // mükerrer kontrolü — tablo kalıcı kaynaktır
+    const kimlikSutun = harita[S.BASLIK.KIMLIK] + 1;
+    if (sonSatir >= 2) {
+      const kimlikler = sayfa.getRange(2, kimlikSutun, sonSatir - 1, 1).getValues();
+      for (let i = 0; i < kimlikler.length; i++) {
+        if (String(kimlikler[i][0]).trim() === meta.submissionId) {
+          deps.log('sheet_duplicate', { submission_id: meta.submissionId, row: i + 2 });
+          return 'duplicate';
+        }
+      }
+    }
+
+    const degerler = sheetSatiri_(d, meta, deps);
+    const satir = [];
+    for (let i = 0; i < sutunSayisi; i++) satir.push('');
+    Object.keys(degerler).forEach(function (baslik) {
+      if (baslik in harita) satir[harita[baslik]] = degerler[baslik];
+    });
+
+    sayfa.getRange(sonSatir + 1, 1, 1, sutunSayisi).setValues([satir]);
+    deps.log('sheet_row_added', { submission_id: meta.submissionId, row: sonSatir + 1 });
+    return 'ok';
+  } catch (err) {
+    deps.log('sheet_error', { submission_id: meta.submissionId, reason: 'WRITE', error: errText_(err) });
+    return 'error';
+  }
+}
+
+/** Başvurudan { başlık: değer } eşlemesi üretir.
+    Yönetime ait tarih/tutar/not sütunları BİLEREK yoktur — otomasyon onlara yazmaz. */
+function sheetSatiri_(d, meta, deps) {
+  const B = CONFIG.SHEETS.BASLIK;
+  const V = CONFIG.SHEETS.VARSAYILAN;
+  const o = {};
+  o[B.TARIH]        = deps.now;
+  o[B.KIMLIK]       = meta.submissionId;
+  o[B.AD]           = formulGuvenli_(d.fullName);
+  o[B.EPOSTA]       = formulGuvenli_(d.email);
+  o[B.TELEFON]      = formulGuvenli_(d.phone);
+  o[B.DOGUM]        = tariheCevir_(d.birthDate);
+  o[B.YAS]          = (meta.age === null || meta.age === undefined) ? '' : meta.age;
+  o[B.SEHIR]        = formulGuvenli_(d.city);
+  o[B.MESLEK]       = formulGuvenli_(d.occupation);
+  o[B.DILLER]       = formulGuvenli_(d.languages);
+  o[B.DENEYIM]      = formulGuvenli_(EXPERIENCE_LABELS[d.experience] || '');
+  o[B.ILGI]         = formulGuvenli_(d.interests.join(', '));
+  o[B.MOTIVASYON]   = formulGuvenli_(d.motivation);
+  o[B.ILKELER]      = d.consentPrinciples ? 'Evet' : 'Hayır';
+  o[B.KVKK]         = d.consentKvkk ? 'Evet' : 'Hayır';
+  o[B.FORM_DILI]    = (d.lang === 'en') ? 'İngilizce' : 'Türkçe';
+  o[B.ODEME_DURUM]  = V.ODEME;
+  o[B.UYELIK_DURUM] = V.UYELIK;
+  o[B.KAYNAK]       = V.KAYNAK;
+  return o;
+}
+
+/** Formül enjeksiyonu koruması.
+    "=", "+", "-", "@", sekme veya satır başı ile başlayan kullanıcı metni Sheets'te
+    formül olarak yorumlanabilir; başına tek tırnak konunca metin olarak kalır.
+    Tek tırnak hücrenin değerine dahil olmaz, yalnızca "bunu metin say" işaretidir. */
+function formulGuvenli_(deger) {
+  if (deger === null || deger === undefined) return '';
+  const s = String(deger);
+  if (!s) return '';
+  return /^[=+\-@\t\r]/.test(s) ? "'" + s : s;
+}
+
+/** "YYYY-MM-DD" -> script saat diliminde Date. Geçersizse metni olduğu gibi döner. */
+function tariheCevir_(ymd) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd || '');
+  if (!m) return formulGuvenli_(ymd);
+  return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+}
+
+/** Sayfada en az bu kadar satır ve sütun olmasını garanti eder (varsa dokunmaz). */
+function yeterAlanAc_(sayfa, satirSayisi, sutunSayisi) {
+  const mevcutSatir = sayfa.getMaxRows();
+  if (mevcutSatir < satirSayisi) sayfa.insertRowsAfter(mevcutSatir, satirSayisi - mevcutSatir);
+  const mevcutSutun = sayfa.getMaxColumns();
+  if (mevcutSutun < sutunSayisi) sayfa.insertColumnsAfter(mevcutSutun, sutunSayisi - mevcutSutun);
+}
+
+/** 1 tabanlı sütun indeksi -> harf (1 -> A, 27 -> AA) */
+function sutunHarfi_(n) {
+  let s = '';
+  while (n > 0) { const k = (n - 1) % 26; s = String.fromCharCode(65 + k) + s; n = (n - k - 1) / 26; }
+  return s;
+}
+
 
 /* ---------------------------- TURNSTILE ----------------------------
    Jeton Cloudflare'ın siteverify ucunda doğrulanır. Dönen değerler:
@@ -653,6 +900,22 @@ function defaultDeps_() {
       },
       remaining: function () { return MailApp.getRemainingDailyQuota(); }
     },
+    /* Google Sheets erişimi. Tablo kimliği KODDA DEĞİL, SHEET_ID script özelliğindedir.
+       SHEETS_ENABLED özelliğine 'false' yazmak yazmayı anında durdurur; mailler
+       etkilenmez ve yeniden dağıtım gerekmez. */
+    sheets: {
+      etkin: function () {
+        const ozellikler = PropertiesService.getScriptProperties();
+        const anahtar = ozellikler.getProperty(CONFIG.SHEETS.ENABLED_PROPERTY);
+        if (String(anahtar || '').trim().toLowerCase() === 'false') return false;
+        return !!ozellikler.getProperty(CONFIG.SHEETS.ID_PROPERTY);
+      },
+      sayfa: function () {
+        const id = PropertiesService.getScriptProperties().getProperty(CONFIG.SHEETS.ID_PROPERTY);
+        if (!id) return null;
+        return SpreadsheetApp.openById(id).getSheetByName(CONFIG.SHEETS.SAYFA);
+      }
+    },
     scriptProperty: function (name) {
       return PropertiesService.getScriptProperties().getProperty(name);
     },
@@ -672,6 +935,562 @@ function defaultDeps_() {
 }
 
 
+/* ==================== TABLO KURULUMU (TEK SEFERLİK) ====================
+   Apps Script editöründe bir kez çalıştırılır. Yaptıkları:
+     - "Üyelik Başvuruları" başlıklarını, biçimlerini ve filtresini kurar
+     - Ödeme / Üyelik Durumu açılır listelerini ve renklerini ekler
+     - "Aktif Üyeler" sayfasını FILTER formülüyle oluşturur
+     - Detay bağlantılarını yazar
+   Var olan satırlara DOKUNMAZ; yalnızca başlık satırını, biçimleri ve formülleri kurar.
+   İkinci kez çalıştırılırsa uyarır; yine de istiyorsan kurulumYap(true) de.        */
+function kurulumYap(zorla) {
+  const S = CONFIG.SHEETS;
+  const id = PropertiesService.getScriptProperties().getProperty(S.ID_PROPERTY);
+  if (!id) {
+    console.log('HATA: ' + S.ID_PROPERTY + ' script özelliği tanımlı değil. ' +
+                'Proje Ayarları → Komut Dosyası Özellikleri bölümüne tablo kimliğini ekle.');
+    return;
+  }
+
+  let ss;
+  try {
+    ss = SpreadsheetApp.openById(id);
+  } catch (err) {
+    console.log('HATA: Tablo açılamadı. ' + S.ID_PROPERTY + ' doğru mu ve ' +
+                'info@laraassociation.org bu Ortak Drive\'a erişebiliyor mu? → ' + errText_(err));
+    return;
+  }
+
+  const basvuru = ss.getSheetByName(S.SAYFA) || ss.insertSheet(S.SAYFA);
+  const basliklar = S.SIRA.map(function (k) { return S.BASLIK[k]; });
+  const sutun = function (k) { return S.SIRA.indexOf(k) + 1; };
+  const son = S.HAZIRLIK_SATIR;
+
+  /* Yeni bir Google Sheets dosyası 1000 satır × 26 sütunla gelir. Biçimler ve açılır
+     listeler HAZIRLIK_SATIR kadar satıra uygulanacağı için önce o satırların VAR
+     OLDUĞUNDAN emin olunur; yoksa getRange aralık hatası verip kurulum yarıda kalır. */
+  yeterAlanAc_(basvuru, son + 1, basliklar.length);
+
+  /* Formül ayıracı TABLODAN ÖLÇÜLÜR, varsayılmaz. Türkçe bölgesel ayarda Sheets
+     argümanları noktalı virgülle ayırır; virgüllü formül "Formül ayrıştırma hatası"
+     verir. Fonksiyon ADLARI İngilizce yazılabilir, Sheets onları kendisi çevirir. */
+  const ayirac = ayiracBelirle_(ss);
+
+  const kuruluMu = String(basvuru.getRange(1, 1).getValue()).trim() === S.BASLIK.TARIH &&
+                   !!ss.getSheetByName(S.AKTIF_SAYFA);
+  if (kuruluMu && zorla !== true) {
+    console.log('Kurulum zaten yapılmış görünüyor. Yeniden kurmak istiyorsan kurulumYap(true) çalıştır. ' +
+                'Veri satırlarına hiçbir durumda dokunulmaz.');
+    return;
+  }
+
+  /* ---- başlık satırı ---- */
+  basvuru.getRange(1, 1, 1, basliklar.length).setValues([basliklar]);
+  basvuru.getRange(1, 1, 1, basliklar.length)
+         .setFontWeight('bold').setBackground('#0B2D52').setFontColor('#FFFFFF')
+         .setVerticalAlignment('middle').setWrap(true);
+  /* Fazla sütunlar yalnızca BOŞSA silinir — yönetimin eklediği bir sütun varsa dokunulmaz. */
+  if (basvuru.getMaxColumns() > basliklar.length && basvuru.getLastColumn() <= basliklar.length) {
+    basvuru.deleteColumns(basliklar.length + 1, basvuru.getMaxColumns() - basliklar.length);
+  }
+
+  /* ---- biçimler ----
+     Metin sütunları düz metin (@) yapılır: formül enjeksiyonuna karşı ikinci katman. */
+  const metinler = ['KIMLIK', 'AD', 'EPOSTA', 'TELEFON', 'SEHIR', 'MESLEK', 'DILLER',
+                    'DENEYIM', 'ILGI', 'MOTIVASYON', 'ILKELER', 'KVKK', 'FORM_DILI',
+                    'ODEME_DURUM', 'UYELIK_DURUM', 'NOT', 'KAYNAK'];
+  metinler.forEach(function (k) { basvuru.getRange(2, sutun(k), son, 1).setNumberFormat('@'); });
+  basvuru.getRange(2, sutun('TARIH'), son, 1).setNumberFormat('dd.mm.yyyy hh:mm');
+  ['DOGUM', 'ODEME_TARIH', 'KARAR_TARIH', 'UYELIK_TARIH'].forEach(function (k) {
+    basvuru.getRange(2, sutun(k), son, 1).setNumberFormat('dd.mm.yyyy');
+  });
+  basvuru.getRange(2, sutun('YAS'), son, 1).setNumberFormat('0');
+  basvuru.getRange(2, sutun('ODEME_TUTAR'), son, 1).setNumberFormat('#,##0.00 "₺"');
+  basvuru.getRange(2, sutun('MOTIVASYON'), son, 1).setWrapStrategy(SpreadsheetApp.WrapStrategy.CLIP);
+
+  basvuru.setColumnWidth(sutun('TARIH'), 130);
+  basvuru.setColumnWidth(sutun('KIMLIK'), 250);
+  basvuru.setColumnWidth(sutun('AD'), 170);
+  basvuru.setColumnWidth(sutun('EPOSTA'), 210);
+  basvuru.setColumnWidth(sutun('MOTIVASYON'), 260);
+  basvuru.setColumnWidth(sutun('NOT'), 220);
+
+  /* ---- açılır listeler (elle metin girilemez) ---- */
+  basvuru.getRange(2, sutun('ODEME_DURUM'), son, 1).setDataValidation(
+    SpreadsheetApp.newDataValidation().requireValueInList(S.ODEME_SECENEKLERI, true)
+      .setAllowInvalid(false).setHelpText('Listeden seçiniz.').build());
+  basvuru.getRange(2, sutun('UYELIK_DURUM'), son, 1).setDataValidation(
+    SpreadsheetApp.newDataValidation().requireValueInList(S.UYELIK_SECENEKLERI, true)
+      .setAllowInvalid(false).setHelpText('Listeden seçiniz.').build());
+
+  /* ---- durum renkleri ---- */
+  const kuralSayisi = bicimKurallariKur_(basvuru, ayirac);
+
+  /* ---- filtre ---- */
+  const eskiFiltre = basvuru.getFilter();
+  if (eskiFiltre) eskiFiltre.remove();
+  // filtre tüm sayfaya kurulur; yoksa sonradan eklenen satırlar filtrenin dışında kalır
+  basvuru.getRange(1, 1, basvuru.getMaxRows(), basliklar.length).createFilter();
+
+  /* ---- Aktif Üyeler ---- */
+  const aktif = ss.getSheetByName(S.AKTIF_SAYFA) || ss.insertSheet(S.AKTIF_SAYFA);
+  const eskiKoruma = aktif.getProtections(SpreadsheetApp.ProtectionType.SHEET);
+  eskiKoruma.forEach(function (k) { k.remove(); });
+  aktif.clear();
+  aktif.clearConditionalFormatRules();
+
+  const aktifBasliklar = S.AKTIF_SUTUNLAR.map(function (k) { return S.BASLIK[k]; }).concat(['Detay Görüntüle']);
+  /* FILTER sonucu sayfadaki satır sayısından fazlaysa Sheets "#REF! dizi sonucu
+     genişletilemedi" verir. Bu yüzden Sayfa 1 ile aynı satır payı açılır. */
+  yeterAlanAc_(aktif, son + 1, aktifBasliklar.length);
+  aktif.getRange(1, 1, 1, aktifBasliklar.length).setValues([aktifBasliklar])
+       .setFontWeight('bold').setBackground('#159A9C').setFontColor('#FFFFFF');
+
+  const formuller = aktifFormulleri_(ss, basvuru);
+  aktif.getRange(2, 1).setFormula(formuller.filtre);
+  aktif.getRange(2, S.AKTIF_SUTUNLAR.length + 1).setFormula(formuller.detay);
+
+  aktif.setColumnWidth(1, 250);
+  aktif.setColumnWidth(2, 170);
+  aktif.setColumnWidth(4, 210);
+  if (aktif.getMaxColumns() > aktifBasliklar.length && aktif.getLastColumn() <= aktifBasliklar.length) {
+    aktif.deleteColumns(aktifBasliklar.length + 1, aktif.getMaxColumns() - aktifBasliklar.length);
+  }
+
+  gorunumAyarla_(basvuru, aktif);
+
+  /* Varsayılan: uyarı koruması. Kimsenin erişimini DEĞİŞTİRMEZ, yanlışlıkla yazmaya
+     karşı uyarır. Katı kilit isteniyorsa aktifSayfayiKatiKoru() ayrıca çalıştırılır;
+     formül yine de silinirse formulleriOnar() geri yazar. */
+  let korumaNotu;
+  try {
+    aktif.protect().setDescription('Aktif Üyeler — otomatik liste, elle düzenlenmez').setWarningOnly(true);
+    korumaNotu = 'uyarı koruması (erişim değişmedi)';
+  } catch (err) {
+    korumaNotu = 'KURULAMADI → ' + errText_(err);
+  }
+
+  console.log([
+    'KURULUM TAMAM',
+    '  Tablo            : ' + ss.getName(),
+    '  Sayfa 1          : ' + S.SAYFA + ' (' + basliklar.length + ' sütun)',
+    '  Sayfa 2          : ' + S.AKTIF_SAYFA + ' — ' + korumaNotu,
+    '  Açılır listeler  : Ödeme (' + S.ODEME_SECENEKLERI.length + '), Üyelik (' + S.UYELIK_SECENEKLERI.length + ')',
+    '  Renk kuralları   : ' + kuralSayisi,
+    '  Formül ayıracı   : "' + ayirac + '"',
+    '  Donmuş           : Sayfa 1 → 1 satır + ' + CONFIG.SHEETS.DONMUS_SUTUN + ' sütun, Sayfa 2 → 1 satır',
+    '',
+    'SIRADAKİ ADIM: formulDurumu() çalıştır — formüllerin Sheets üzerinde gerçekten',
+    'çalışıp çalışmadığını gösterir. Hata varsa oradaki yönlendirmeyi izle.'
+  ].join('\n'));
+}
+
+/* ---- FORMÜL AYIRACI -------------------------------------------------------
+   Apps Script'in setFormula'sı formülü OLDUĞU GİBİ yazar; onu ayrıştıran taraf
+   tablonun bölgesel ayarıdır. Türkçe (tr_TR) ayarda argümanlar NOKTALI VİRGÜLLE
+   ayrılır ve virgüllü bir formül "Formül ayrıştırma hatası" (#ERROR!) verir.
+   Fonksiyon ADLARI İngilizce yazılabilir — Sheets bunları kendisi çevirir
+   (IF → EĞER); sorun yalnızca ayıraçtadır.
+
+   Ayıraç VARSAYILMAZ, ölçülür: geçici bir sayfaya deneme formülü yazılır, sonucuna
+   bakılır, sayfa silinir. Veri sayfalarına hiç dokunulmaz.
+   Gerekirse FORMULA_SEPARATOR script özelliğine ',' veya ';' yazarak elle dayatılır. */
+function ayiracBelirle_(ss) {
+  const zorlanan = PropertiesService.getScriptProperties().getProperty('FORMULA_SEPARATOR');
+  if (zorlanan === ',' || zorlanan === ';') return zorlanan;
+
+  const ad = '__lara_ayirac__';
+  let gecici = ss.getSheetByName(ad);
+  try {
+    if (!gecici) gecici = ss.insertSheet(ad);
+    gecici.getRange(1, 1).setFormula('=IF(1=1,"virgul","hayir")');
+    const sonuc = String(gecici.getRange(1, 1).getDisplayValue()).trim();
+    return (sonuc === 'virgul') ? ',' : ';';
+  } catch (err) {
+    return ';';   // ölçemediysek Türkçe ayarı varsay: güvenli taraf
+  } finally {
+    try { if (gecici) ss.deleteSheet(gecici); } catch (e) {}
+  }
+}
+
+/* ---- Aktif Üyeler formülleri ----------------------------------------------
+   Tek yerde üretilir: kurulum da onarım da aynı metni yazar.
+   Argüman ayıracı dışarıdan verilir (ayiracBelirle_ ölçer). */
+function aktifFormulleri_(ss, basvuru, ayirac) {
+  const S = CONFIG.SHEETS;
+  const A = (ayirac === ',' || ayirac === ';') ? ayirac : ayiracBelirle_(ss);
+  const sutun = function (k) { return S.SIRA.indexOf(k) + 1; };
+  const sayfaAdi = "'" + S.SAYFA.replace(/'/g, "''") + "'";
+  const sonHarf = sutunHarfi_(S.SIRA.length);
+  const odemeHarf = sutunHarfi_(sutun('ODEME_DURUM'));
+  const uyelikHarf = sutunHarfi_(sutun('UYELIK_DURUM'));
+  const kimlikHarf = sutunHarfi_(sutun('KIMLIK'));
+  const secilen = S.AKTIF_SUTUNLAR.map(function (k) { return sutun(k); }).join(A);
+  const kosul = sayfaAdi + '!' + odemeHarf + '2:' + odemeHarf + '="' + S.AKTIF_FILTRE.ODEME + '"' + A +
+                sayfaAdi + '!' + uyelikHarf + '2:' + uyelikHarf + '="' + S.AKTIF_FILTRE.UYELIK + '"';
+
+  return {
+    ayirac: A,
+
+    /* Birincil: CHOOSECOLS + FILTER. Sütun tiplerini olduğu gibi korur. */
+    filtre: '=IFERROR(CHOOSECOLS(FILTER(' + sayfaAdi + '!A2:' + sonHarf + A + kosul + ')' + A + secilen + ')' + A + '"")',
+
+    /* Yedek: CHOOSECOLS bu hesapta yoksa (#NAME?) QUERY sürümü kullanılır.
+       QUERY'nin sorgu METNİ her zaman virgüllüdür ("select B,C,E") — o bir metin
+       sabiti, bölgesel ayardan etkilenmez. Ayıraç yalnızca argümanlar arasında değişir.
+       Uyarı: QUERY bir sütundaki karışık veri tiplerini tek tipe zorlar; azınlıkta
+       kalan değerler boş görünebilir. Bu yüzden birincil seçenek değildir. */
+    filtreQuery: '=IFERROR(QUERY(' + sayfaAdi + '!A2:' + sonHarf + A + '"select ' +
+      S.AKTIF_SUTUNLAR.map(function (k) { return sutunHarfi_(sutun(k)); }).join(',') +
+      ' where ' + odemeHarf + "='" + S.AKTIF_FILTRE.ODEME + "' and " +
+      uyelikHarf + "='" + S.AKTIF_FILTRE.UYELIK + "'\"" + A + '0)' + A + '"")',
+
+    /* Satır numarası MATCH ile her hesaplamada yeniden bulunur: Sayfa 1 sıralansa,
+       araya satır eklense bile bağlantı doğru kişiye gider. */
+    detay: '=ARRAYFORMULA(IF($A2:$A=""' + A + '""' + A + 'HYPERLINK("' + ss.getUrl() + '#gid=' + basvuru.getSheetId() +
+      '&range=A"&MATCH($A2:$A' + A + sayfaAdi + '!' + kimlikHarf + ':' + kimlikHarf + A + '0)' + A + '"Detay ▸")))',
+
+    detaySutunu: S.AKTIF_SUTUNLAR.length + 1
+  };
+}
+
+/* ---- Görünüm ayarları -------------------------------------------------------
+   Donmuş satır/sütunlar ve Aktif Üyeler'deki tarih biçimi. Yalnızca GÖRÜNÜM yazar;
+   hiçbir hücre değerine, formüle ya da açılır listeye dokunmaz. Aynı değerler tekrar
+   yazıldığı için defalarca çalıştırılabilir.                                     */
+function gorunumAyarla_(basvuru, aktif) {
+  const S = CONFIG.SHEETS;
+
+  basvuru.setFrozenRows(1);
+  basvuru.setFrozenColumns(S.DONMUS_SUTUN);
+
+  if (!aktif) return;
+  aktif.setFrozenRows(1);
+
+  /* Aktif Üyeler'deki Üyelik Tarihi sütunu: FILTER'dan gelen değer tarih olduğu için
+     biçim verilmezse seri numarası ya da saatli biçim görünebiliyor. */
+  const sutunNo = S.AKTIF_SUTUNLAR.indexOf('UYELIK_TARIH') + 1;
+  if (sutunNo > 0) {
+    aktif.getRange(2, sutunNo, S.HAZIRLIK_SATIR, 1).setNumberFormat('dd.mm.yyyy');
+  }
+}
+
+/** Görünümü yeniden uygular. kurulumYap() GEREKTİRMEZ; veriye, formüle ve açılır
+    listelere dokunmaz. Donmuş sütunlar ya da tarih biçimi bozulursa bunu çalıştır. */
+function gorunumOnarimi() {
+  const S = CONFIG.SHEETS;
+  const id = PropertiesService.getScriptProperties().getProperty(S.ID_PROPERTY);
+  if (!id) { console.log('HATA: ' + S.ID_PROPERTY + ' tanımlı değil.'); return; }
+
+  const ss = SpreadsheetApp.openById(id);
+  const basvuru = ss.getSheetByName(S.SAYFA);
+  const aktif = ss.getSheetByName(S.AKTIF_SAYFA);
+  if (!basvuru) { console.log('HATA: "' + S.SAYFA + '" bulunamadı.'); return; }
+
+  const oncekiSatir = basvuru.getLastRow();
+  gorunumAyarla_(basvuru, aktif);
+  SpreadsheetApp.flush();
+
+  const sutunNo = S.AKTIF_SUTUNLAR.indexOf('UYELIK_TARIH') + 1;
+  console.log([
+    'GÖRÜNÜM ONARIMI TAMAM',
+    '  Başvuru satırı   : ' + Math.max(oncekiSatir - 1, 0) + ' (değişmedi — veriye dokunulmadı)',
+    '  Sayfa 1 donmuş   : 1 satır + ' + S.DONMUS_SUTUN + ' sütun',
+    '  Sayfa 2 donmuş   : 1 satır',
+    '  Üyelik Tarihi    : ' + (aktif ? sutunHarfi_(sutunNo) + ' sütunu → dd.mm.yyyy' : 'Sayfa 2 yok, atlandı')
+  ].join('\n'));
+}
+
+/* ---- Koşullu biçim kuralları ----------------------------------------------
+   Yalnızca BİÇİM yazar; hiçbir hücre değerine dokunmaz. Özel formül içeren iki
+   kural da ayıraca duyarlıdır. Kaç kural kurulduğunu döner. */
+function bicimKurallariKur_(basvuru, ayirac) {
+  const S = CONFIG.SHEETS;
+  const A = ayirac;
+  const sutun = function (k) { return S.SIRA.indexOf(k) + 1; };
+  const son = S.HAZIRLIK_SATIR;
+  const renk = { yesil: '#D9EAD3', sari: '#FFF2CC', kirmizi: '#F4CCCC', gri: '#EFEFEF', turuncu: '#FCE5CD' };
+  const kurallar = [];
+
+  const renkKurali = function (k, deger, arka) {
+    kurallar.push(SpreadsheetApp.newConditionalFormatRule()
+      .whenTextEqualTo(deger).setBackground(arka)
+      .setRanges([basvuru.getRange(2, sutun(k), son, 1)]).build());
+  };
+  renkKurali('ODEME_DURUM', 'Ödendi', renk.yesil);
+  renkKurali('ODEME_DURUM', 'Beklemede', renk.sari);
+  renkKurali('ODEME_DURUM', 'Ödenmedi', renk.kirmizi);
+  renkKurali('ODEME_DURUM', 'İade Edildi', renk.kirmizi);
+  renkKurali('ODEME_DURUM', 'Muaf', renk.gri);
+  renkKurali('UYELIK_DURUM', 'Onaylandı', renk.yesil);
+  renkKurali('UYELIK_DURUM', 'Başvuru Alındı', renk.sari);
+  renkKurali('UYELIK_DURUM', 'İnceleniyor', renk.sari);
+  renkKurali('UYELIK_DURUM', 'Yönetim Onayı Bekliyor', renk.sari);
+  renkKurali('UYELIK_DURUM', 'Reddedildi', renk.kirmizi);
+  renkKurali('UYELIK_DURUM', 'Üyelikten Ayrıldı', renk.kirmizi);
+
+  const epostaHarf  = sutunHarfi_(sutun('EPOSTA'));
+  const uyelikHarf  = sutunHarfi_(sutun('UYELIK_DURUM'));
+  const uyTarihHarf = sutunHarfi_(sutun('UYELIK_TARIH'));
+
+  // aynı e-posta birden fazla satırda ise işaretle (yönetim görsün diye)
+  kurallar.push(SpreadsheetApp.newConditionalFormatRule()
+    .whenFormulaSatisfied('=AND($' + epostaHarf + '2<>""' + A + 'COUNTIF($' + epostaHarf + '$2:$' + epostaHarf + A + '$' + epostaHarf + '2)>1)')
+    .setBackground(renk.turuncu)
+    .setRanges([basvuru.getRange(2, sutun('EPOSTA'), son, 1)]).build());
+
+  // onaylandı ama Üyelik Tarihi boş -> hatırlatma
+  kurallar.push(SpreadsheetApp.newConditionalFormatRule()
+    .whenFormulaSatisfied('=AND($' + uyelikHarf + '2="Onaylandı"' + A + '$' + uyTarihHarf + '2="")')
+    .setBackground(renk.sari)
+    .setRanges([basvuru.getRange(2, sutun('UYELIK_TARIH'), son, 1)]).build());
+
+  basvuru.setConditionalFormatRules(kurallar);
+  return kurallar.length;
+}
+
+/** Tabloyu AÇAR ama DEĞİŞTİRMEZ. Formüller yerinde mi, Sheets onları kabul etmiş mi?
+    Kurulumdan sonra ilk çalıştırılacak kontrol budur. */
+function formulDurumu() {
+  const S = CONFIG.SHEETS;
+  const id = PropertiesService.getScriptProperties().getProperty(S.ID_PROPERTY);
+  if (!id) { console.log('HATA: ' + S.ID_PROPERTY + ' tanımlı değil.'); return; }
+
+  const ss = SpreadsheetApp.openById(id);
+  const basvuru = ss.getSheetByName(S.SAYFA);
+  const aktif = ss.getSheetByName(S.AKTIF_SAYFA);
+  if (!basvuru || !aktif) { console.log('HATA: Sayfalar bulunamadı. Önce kurulumYap() çalıştır.'); return; }
+
+  const ayirac = ayiracBelirle_(ss);
+  const beklenen = aktifFormulleri_(ss, basvuru, ayirac);
+  const mevcutFiltre = aktif.getRange(2, 1).getFormula();
+  const mevcutDetay = aktif.getRange(2, beklenen.detaySutunu).getFormula();
+  const satirlar = Math.max(aktif.getLastRow() - 1, 0);
+
+  const hataliMi = function (v) {
+    const t = String(v);
+    return t.indexOf('#REF') === 0 || t.indexOf('#N/A') === 0 || t.indexOf('#NAME') === 0 ||
+           t.indexOf('#ERROR') === 0 || t.indexOf('#VALUE') === 0;
+  };
+  const a2 = aktif.getRange(2, 1).getDisplayValue();
+  const g2 = aktif.getRange(2, beklenen.detaySutunu).getDisplayValue();
+
+  console.log([
+    'Tablo bölgesi     : ' + ss.getSpreadsheetLocale() + '  →  argüman ayıracı: "' + ayirac + '"',
+    'A2 filtre formülü : ' + (mevcutFiltre ? (mevcutFiltre === beklenen.filtre ? 'YERİNDE' :
+      (mevcutFiltre === beklenen.filtreQuery ? 'YERİNDE (QUERY sürümü)' : 'FARKLI → ' + mevcutFiltre)) : 'YOK / SİLİNMİŞ'),
+    'Detay formülü     : ' + (mevcutDetay ? 'YERİNDE' : 'YOK / SİLİNMİŞ'),
+    'Listelenen satır  : ' + satirlar,
+    'A2 görünen değer  : ' + (a2 === '' ? '(boş — eşleşen üye yok, normal)' : a2),
+    'Detay görünen     : ' + (g2 === '' ? '(boş)' : g2),
+    '',
+    hataliMi(a2) ? '!! A2 HATA veriyor: ' + a2 : '   A2 hata vermiyor',
+    hataliMi(g2) ? '!! Detay HATA veriyor: ' + g2 : '   Detay hata vermiyor',
+    '',
+    'Ne yapmalı:',
+    '  #ERROR! → ayıraç yanlış (virgül/noktalı virgül). ayiracOnarimi() çalıştır.',
+    '  #NAME?  → CHOOSECOLS desteklenmiyor. aktifFormuluQueryYap() çalıştır.',
+    '  #REF!   → dizi genişleyemiyor. Sayfa 2\'de aşağıdaki hücreleri temizle, sonra formulleriOnar().',
+    '  YOK     → formulleriOnar() çalıştır.',
+    '  Detay tek satırda kalıyorsa → detayLinkleriSatirBazliYap() çalıştır.',
+    '',
+    'A2\'ye yazılması gereken formül:',
+    '  ' + beklenen.filtre,
+    'Detay hücresine yazılması gereken formül:',
+    '  ' + beklenen.detay
+  ].join('\n'));
+}
+
+/** TEK ADIMLIK ONARIM — ayıraç hatası (#ERROR!) için bunu çalıştır.
+    kurulumYap() GEREKTİRMEZ. Başvuru tablosundaki hiçbir satıra, başlığa, açılır
+    listeye veya sütun biçimine dokunmaz. Yalnızca:
+      - doğru ayıracı tablodan ölçer
+      - Aktif Üyeler'deki A2 filtre ve detay formüllerini yeniden yazar
+      - özel formül içeren iki koşullu biçim kuralını yeniden kurar            */
+function ayiracOnarimi() {
+  const S = CONFIG.SHEETS;
+  const id = PropertiesService.getScriptProperties().getProperty(S.ID_PROPERTY);
+  if (!id) { console.log('HATA: ' + S.ID_PROPERTY + ' tanımlı değil.'); return; }
+
+  const ss = SpreadsheetApp.openById(id);
+  const basvuru = ss.getSheetByName(S.SAYFA);
+  const aktif = ss.getSheetByName(S.AKTIF_SAYFA);
+  if (!basvuru || !aktif) { console.log('HATA: Sayfalar bulunamadı.'); return; }
+
+  const oncekiSatir = basvuru.getLastRow();          // veri kaybı olmadığını kanıtlamak için
+  const ayirac = ayiracBelirle_(ss);
+  const f = aktifFormulleri_(ss, basvuru, ayirac);
+
+  yeterAlanAc_(aktif, S.HAZIRLIK_SATIR + 1, f.detaySutunu);
+  aktif.getRange(2, 1, aktif.getMaxRows() - 1, f.detaySutunu).clearContent();
+  aktif.getRange(2, 1).setFormula(f.filtre);
+  aktif.getRange(2, f.detaySutunu).setFormula(f.detay);
+
+  const kuralSayisi = bicimKurallariKur_(basvuru, ayirac);
+  SpreadsheetApp.flush();
+
+  const a2 = aktif.getRange(2, 1).getDisplayValue();
+  const g2 = aktif.getRange(2, f.detaySutunu).getDisplayValue();
+  const hatali = function (v) { return String(v).indexOf('#') === 0; };
+
+  console.log([
+    'ONARIM TAMAM',
+    '  Tablo bölgesi    : ' + ss.getSpreadsheetLocale() + '  →  ayıraç: "' + ayirac + '"',
+    '  Başvuru satırı   : ' + Math.max(oncekiSatir - 1, 0) + ' (değişmedi — tabloya dokunulmadı)',
+    '  Koşullu biçim    : ' + kuralSayisi + ' kural yeniden kuruldu',
+    '  A2 sonucu        : ' + (a2 === '' ? '(boş — eşleşen üye yok, normal)' : a2) + (hatali(a2) ? '   <-- HÂLÂ HATA' : '   OK'),
+    '  Detay sonucu     : ' + (g2 === '' ? '(boş)' : g2) + (hatali(g2) ? '   <-- HÂLÂ HATA' : '   OK'),
+    '',
+    'A2 formülü:',
+    '  ' + f.filtre,
+    '',
+    hatali(a2) ? 'Hâlâ hata varsa: #NAME? → aktifFormuluQueryYap() | #REF! → Sayfa 2\'yi temizleyip tekrar çalıştır'
+               : 'Doğrulamak için formulDurumu() çalıştır.'
+  ].join('\n'));
+}
+
+/** Aktif Üyeler formüllerini yeniden yazar. Sayfa 1 verisine DOKUNMAZ.
+    Formül yanlışlıkla silinirse ya da bozulursa bunu çalıştırmak yeterlidir. */
+function formulleriOnar() {
+  const S = CONFIG.SHEETS;
+  const ss = SpreadsheetApp.openById(PropertiesService.getScriptProperties().getProperty(S.ID_PROPERTY));
+  const basvuru = ss.getSheetByName(S.SAYFA);
+  const aktif = ss.getSheetByName(S.AKTIF_SAYFA);
+  if (!basvuru || !aktif) { console.log('HATA: Sayfalar bulunamadı.'); return; }
+
+  const f = aktifFormulleri_(ss, basvuru);
+  yeterAlanAc_(aktif, S.HAZIRLIK_SATIR + 1, f.detaySutunu);
+  // dizi formüllerinin genişlemesini engelleyen artıkları temizle
+  aktif.getRange(2, 1, aktif.getMaxRows() - 1, f.detaySutunu).clearContent();
+  aktif.getRange(2, 1).setFormula(f.filtre);
+  aktif.getRange(2, f.detaySutunu).setFormula(f.detay);
+  console.log('Formüller yeniden yazıldı. Kontrol için formulDurumu() çalıştır.');
+}
+
+/** CHOOSECOLS çalışmazsa (#NAME?) QUERY sürümüne geçer. Sütun sırası aynı kalır. */
+function aktifFormuluQueryYap() {
+  const S = CONFIG.SHEETS;
+  const ss = SpreadsheetApp.openById(PropertiesService.getScriptProperties().getProperty(S.ID_PROPERTY));
+  const basvuru = ss.getSheetByName(S.SAYFA);
+  const aktif = ss.getSheetByName(S.AKTIF_SAYFA);
+  const f = aktifFormulleri_(ss, basvuru);
+  aktif.getRange(2, 1, aktif.getMaxRows() - 1, S.AKTIF_SUTUNLAR.length).clearContent();
+  aktif.getRange(2, 1).setFormula(f.filtreQuery);
+  console.log('QUERY sürümü yazıldı. Kontrol için formulDurumu() çalıştır.\n' +
+              'Not: QUERY bir sütundaki karışık veri tiplerini tek tipe zorlar; ' +
+              'Telefon ve Üyelik Tarihi sütunlarını gözle doğrula.');
+}
+
+/** İSTEĞE BAĞLI — Aktif Üyeler sayfasına katı kilit koyar: yalnızca bu scripti
+    çalıştıran hesap düzenleyebilir. Dosya erişimini DEĞİŞTİRMEZ, herkes görmeye
+    devam eder. Geri almak için aktifSayfaKorumasiniGevset() çalıştır. */
+function aktifSayfayiKatiKoru() {
+  const S = CONFIG.SHEETS;
+  const ss = SpreadsheetApp.openById(PropertiesService.getScriptProperties().getProperty(S.ID_PROPERTY));
+  const aktif = ss.getSheetByName(S.AKTIF_SAYFA);
+  aktif.getProtections(SpreadsheetApp.ProtectionType.SHEET).forEach(function (k) { k.remove(); });
+  try {
+    const koruma = aktif.protect().setDescription('Aktif Üyeler — otomatik liste (katı kilit)');
+    const digerleri = koruma.getEditors();          // scripti çalıştıran hesap listede kalır
+    if (digerleri.length) koruma.removeEditors(digerleri);
+    if (koruma.canDomainEdit()) koruma.setDomainEdit(false);
+    console.log('Katı kilit kuruldu. Sayfa 2 artık yalnızca bu hesaptan düzenlenebilir; ' +
+                'diğerleri görmeye devam eder. Geri almak: aktifSayfaKorumasiniGevset()');
+  } catch (err) {
+    console.log('Katı kilit kurulamadı (' + errText_(err) + '). Uyarı korumasına dönülüyor.');
+    aktif.protect().setDescription('Aktif Üyeler — otomatik liste').setWarningOnly(true);
+  }
+}
+
+/** Katı kilidi kaldırır, uyarı korumasına döner. */
+function aktifSayfaKorumasiniGevset() {
+  const S = CONFIG.SHEETS;
+  const ss = SpreadsheetApp.openById(PropertiesService.getScriptProperties().getProperty(S.ID_PROPERTY));
+  const aktif = ss.getSheetByName(S.AKTIF_SAYFA);
+  aktif.getProtections(SpreadsheetApp.ProtectionType.SHEET).forEach(function (k) { k.remove(); });
+  aktif.protect().setDescription('Aktif Üyeler — otomatik liste').setWarningOnly(true);
+  console.log('Uyarı korumasına dönüldü.');
+}
+
+/** İSTEĞE BAĞLI — formülleri günde bir kez kendiliğinden onaran tetikleyici kurar. */
+function onarimTetikleyicisiKur() {
+  onarimTetikleyicisiKaldir();
+  ScriptApp.newTrigger('formulleriOnarSessiz_').timeBased().everyDays(1).atHour(4).create();
+  console.log('Günlük onarım tetikleyicisi kuruldu (her gün ~04:00).');
+}
+
+function onarimTetikleyicisiKaldir() {
+  ScriptApp.getProjectTriggers().forEach(function (t) {
+    if (t.getHandlerFunction() === 'formulleriOnarSessiz_') ScriptApp.deleteTrigger(t);
+  });
+}
+
+/** Tetikleyici için: formül eksikse yeniden yazar, yerindeyse hiçbir şey yapmaz. */
+function formulleriOnarSessiz_() {
+  try {
+    const S = CONFIG.SHEETS;
+    const ss = SpreadsheetApp.openById(PropertiesService.getScriptProperties().getProperty(S.ID_PROPERTY));
+    const basvuru = ss.getSheetByName(S.SAYFA);
+    const aktif = ss.getSheetByName(S.AKTIF_SAYFA);
+    if (!basvuru || !aktif) return;
+    const f = aktifFormulleri_(ss, basvuru);
+    if (!aktif.getRange(2, 1).getFormula()) {
+      aktif.getRange(2, 1).setFormula(f.filtre);
+      console.log(JSON.stringify({ event: 'sheet_formula_repaired', cell: 'A2' }));
+    }
+    if (!aktif.getRange(2, f.detaySutunu).getFormula()) {
+      aktif.getRange(2, f.detaySutunu).setFormula(f.detay);
+      console.log(JSON.stringify({ event: 'sheet_formula_repaired', cell: 'detay' }));
+    }
+  } catch (err) {
+    console.error(JSON.stringify({ event: 'sheet_formula_repair_error', error: errText_(err) }));
+  }
+}
+
+/** Kurulumu değiştirmeden mevcut durumu gösterir. */
+function kurulumDurumu() {
+  const S = CONFIG.SHEETS;
+  const ozellikler = PropertiesService.getScriptProperties();
+  const id = ozellikler.getProperty(S.ID_PROPERTY);
+  console.log(S.ID_PROPERTY + ' : ' + (id ? 'tanımlı (' + id.length + ' karakter)' : 'TANIMSIZ'));
+  console.log(S.ENABLED_PROPERTY + ' : ' + (ozellikler.getProperty(S.ENABLED_PROPERTY) || '(yok → açık)'));
+  if (!id) return;
+  try {
+    const ss = SpreadsheetApp.openById(id);
+    const b = ss.getSheetByName(S.SAYFA);
+    const a = ss.getSheetByName(S.AKTIF_SAYFA);
+    console.log('Tablo      : ' + ss.getName());
+    console.log(S.SAYFA + ' : ' + (b ? (b.getLastRow() - 1) + ' kayıt' : 'YOK'));
+    console.log(S.AKTIF_SAYFA + ' : ' + (a ? Math.max(a.getLastRow() - 1, 0) + ' aktif üye' : 'YOK'));
+  } catch (err) {
+    console.log('Tabloya erişilemedi: ' + errText_(err));
+  }
+}
+
+/** ARRAYFORMULA + HYPERLINK beklendiği gibi çalışmazsa: her satıra ayrı bağlantı yazar. */
+function detayLinkleriSatirBazliYap(satirSayisi) {
+  const S = CONFIG.SHEETS;
+  const n = satirSayisi || 1000;
+  const ss = SpreadsheetApp.openById(PropertiesService.getScriptProperties().getProperty(S.ID_PROPERTY));
+  const basvuru = ss.getSheetByName(S.SAYFA);
+  const aktif = ss.getSheetByName(S.AKTIF_SAYFA);
+  const A = ayiracBelirle_(ss);
+  const sayfaAdi = "'" + S.SAYFA.replace(/'/g, "''") + "'";
+  const kimlikHarf = sutunHarfi_(S.SIRA.indexOf('KIMLIK') + 1);
+  const sutunNo = S.AKTIF_SUTUNLAR.length + 1;
+
+  yeterAlanAc_(aktif, n + 1, sutunNo);
+  aktif.getRange(2, sutunNo, aktif.getMaxRows() - 1, 1).clearContent();
+  const formuller = [];
+  for (let r = 2; r < 2 + n; r++) {
+    formuller.push(['=IF($A' + r + '=""' + A + '""' + A + 'HYPERLINK("' + ss.getUrl() + '#gid=' + basvuru.getSheetId() +
+      '&range=A"&MATCH($A' + r + A + sayfaAdi + '!' + kimlikHarf + ':' + kimlikHarf + A + '0)' + A + '"Detay ▸"))']);
+  }
+  aktif.getRange(2, sutunNo, n, 1).setFormulas(formuller);
+  console.log(n + ' satıra ayrı detay bağlantısı yazıldı (ayıraç: "' + A + '").');
+}
+
+
 /* ==================== EDİTÖRDEN ÇALIŞTIRILACAK TESTLER ====================
    Apps Script editöründe üstteki fonksiyon listesinden seçip "Çalıştır" de.   */
 
@@ -686,7 +1505,81 @@ function testDeps_() {
   const deps = defaultDeps_();
   deps.scriptProperty = function () { return 'test'; };
   deps.fetchJson = function () { return { success: true }; };
+  /* Editör testleri gerçek tabloya YAZMAZ; tabloyu sahte veriyle kirletmemek için.
+     Gerçek yazmayı denemek için testSheetsGercekYazma() kullan. */
+  deps.sheets = { etkin: function () { return false; }, sayfa: function () { return null; } };
   return deps;
+}
+
+/** Bellekte sahte bir Sheets sayfası — gerçek tabloya dokunmadan yazma mantığını sınar. */
+function sahteSayfa_(basliklar, satirlar) {
+  const veri = [basliklar.slice()].concat((satirlar || []).map(function (r) { return r.slice(); }));
+  return {
+    _veri: veri,
+    getLastRow: function () { return veri.length; },
+    getLastColumn: function () { return basliklar.length; },
+    getRange: function (satir, sutun, satirSayisi, sutunSayisi) {
+      return {
+        getValues: function () {
+          const c = [];
+          for (let i = 0; i < satirSayisi; i++) {
+            const kaynak = veri[satir - 1 + i] || [];
+            const p = [];
+            for (let j = 0; j < sutunSayisi; j++) p.push(kaynak[sutun - 1 + j] === undefined ? '' : kaynak[sutun - 1 + j]);
+            c.push(p);
+          }
+          return c;
+        },
+        setValues: function (degerler) {
+          for (let i = 0; i < degerler.length; i++) {
+            while (veri.length < satir + i) veri.push([]);
+            const hedef = veri[satir - 1 + i] || (veri[satir - 1 + i] = []);
+            for (let j = 0; j < degerler[i].length; j++) hedef[sutun - 1 + j] = degerler[i][j];
+          }
+          return this;
+        }
+      };
+    }
+  };
+}
+
+/** Mail GÖNDERMEZ, gerçek tabloya YAZMAZ. Sahte sayfaya yazılan satırı günlüğe döker. */
+function testSheetsSahte() {
+  const S = CONFIG.SHEETS;
+  const basliklar = S.SIRA.map(function (k) { return S.BASLIK[k]; });
+  const sayfa = sahteSayfa_(basliklar, []);
+  const deps = testDeps_();
+  deps.sheets = { etkin: function () { return true; }, sayfa: function () { return sayfa; } };
+  deps.mail = { send: function () {}, remaining: function () { return 100; } };
+
+  const kimlik = 'sahte-' + Date.now();
+  const r = handleSubmission_(ornekBasvuru_('tr', kimlik), deps);
+  console.log('Yanıt: ' + JSON.stringify({ ok: r.ok, sheetSaved: r.sheetSaved, error: r.error }));
+  const satir = sayfa._veri[1] || [];
+  basliklar.forEach(function (b, i) { console.log('  ' + b + ': ' + satir[i]); });
+
+  const tekrar = handleSubmission_(ornekBasvuru_('tr', kimlik), deps);
+  console.log('Aynı kimlik ikinci kez → toplam satır: ' + (sayfa._veri.length - 1) +
+              ' (1 olmalı), sheetSaved: ' + tekrar.sheetSaved);
+}
+
+/** GERÇEK TABLOYA YAZAR — tek sahte satır ekler. Gördükten sonra o satırı SİL.
+    Mail göndermez. */
+function testSheetsGercekYazma() {
+  const deps = defaultDeps_();
+  deps.now = new Date();
+  const kimlik = 'TEST-' + Utilities.formatDate(deps.now, CONFIG.TIMEZONE, 'yyyyMMdd-HHmmss');
+  const ornek = normalize_(ornekBasvuru_('tr', kimlik));
+  const meta = { submissionId: kimlik, receivedAt: '', age: ageOf_(ornek.birthDate, deps) };
+  console.log('Sonuç: ' + kaydetSheets_(ornek, meta, deps));
+  console.log('Kimlik: ' + kimlik + '  → tabloda gördükten sonra bu satırı SİL.');
+}
+
+/** Formül enjeksiyonu korumasını gösterir. Hiçbir şey yazmaz. */
+function testFormulGuvenligi() {
+  ['=IMPORTXML("http://x","//a")', '+1+1', '-5', '@foo', 'Ayşe Yılmaz', '+90 555 111 22 33', ''].forEach(function (v) {
+    console.log(JSON.stringify(v) + '  →  ' + JSON.stringify(formulGuvenli_(v)));
+  });
 }
 
 /* Gizli anahtarın tanımlı olup olmadığını gösterir. Anahtarın DEĞERİNİ yazmaz. */
