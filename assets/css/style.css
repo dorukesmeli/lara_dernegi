@@ -1126,6 +1126,9 @@ body.modal-open{overflow:hidden}
   .form-progress li.is-current .fp-label{position:absolute;left:0;bottom:0;white-space:nowrap}
   .form-nav .btn{padding:.9rem 1.1rem;font-size:.94rem;white-space:nowrap}
   .form-nav{position:sticky;bottom:-1.5rem;margin:1.2rem -1.25rem -1.5rem;padding:.85rem 1.25rem 1.1rem;background:linear-gradient(180deg,rgba(255,255,255,.85),#fff 35%);z-index:2}
+  /* .form-nav'ın -1.5rem alt boşluğu sonraki paragrafı yukarı çekiyor ve sticky
+     çubuğun arka planı altında bırakıyor; 1.5rem telafi + .8rem normal boşluk */
+  .form-nav + .fee-fine{margin-top:2.3rem}
   .modal-card > h3{font-size:1.15rem}
   .modal-head{gap:.85rem;margin-bottom:1.1rem}
   .modal-head .avatar{width:54px;height:54px;font-size:1.05rem}
