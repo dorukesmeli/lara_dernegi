@@ -161,7 +161,31 @@ const CONFIG = {
 
     /* Sayfa 1'de sola sabitlenen sütun sayısı: Başvuru Tarihi + Kimlik + Ad Soyad.
        Sağa kaydırırken kimin satırına baktığın kaybolmasın diye. */
-    DONMUS_SUTUN: 3
+    DONMUS_SUTUN: 3,
+
+    /* Üyelik Tarihi otomasyonu (kurulabilir onEdit tetikleyicisi).
+       Koşul AKTIF_FILTRE ile AYNIDIR: Ödeme "Ödendi" + Üyelik "Onaylandı".
+       Böylece bir satır Aktif Üyeler'de göründüğü anda tarihi de yazılmış olur. */
+    UYELIK_TARIHI: {
+      TETIKLEYICI: 'uyelikTarihiTetikleyici',
+      /* Tek düzenlemede işlenecek azami satır. Kazara binlerce satırlık yapıştırmada
+         tetikleyicinin zaman aşımına uğramasını önler. */
+      MAX_SATIR: 500
+    }
+  },
+
+  /* Teyit mailine eklenen üyelik başvuru formu (PDF).
+     Dosya ÖZEL bir Google Drive konumunda durur, herkese açılmaz, siteye konmaz.
+     Dosya kimliği KODDA TUTULMAZ: Proje Ayarları → Komut Dosyası Özellikleri'nde
+     FORM_PDF_ID adıyla saklanır.
+
+     Davranış:
+       FORM_PDF_ID tanımlı DEĞİL → özellik kapalı sayılır, mail eksiz gider.
+       FORM_PDF_ID tanımlı AMA dosya okunamıyor → teyit maili HİÇ GÖNDERİLMEZ,
+       yanıt CONFIRMATION_FAILED döner. Eksik ekli mail başarılı sayılmaz. */
+  FORM_PDF: {
+    ID_PROPERTY: 'FORM_PDF_ID',
+    DOSYA_ADI: 'Lara Derneği Başvuru Formu.pdf'
   },
 
   /* true iken hiçbir mail gönderilmez; oluşturulan mailler yalnızca günlüğe yazılır */
@@ -376,12 +400,18 @@ function handleSubmission_(raw, deps) {
     // 2) Teyit maili — hata YUTULMAZ: başarısızsa yanıt ok:false döner.
     log('confirmation_attempted', { submission_id: sid, confirmation_recipient: d.email });
     try {
+      /* Ek alınamazsa istisna fırlar ve aşağıdaki MEVCUT catch'e düşer:
+         teyit maili gönderilmez, state.confirmation false kalır, yanıt
+         CONFIRMATION_FAILED olur. Tekrar gelen aynı başvuru yalnızca teyit
+         mailini yeniden dener — mükerrer satır ve mükerrer iç bildirim oluşmaz. */
+      const ek = basvuruFormuEki_(deps);
       deps.mail.send({
         to: d.email,
         name: CONFIG.CONFIRM_SENDER_NAME[d.lang],
         subject: confirm.subject,
         body: confirm.text,
-        htmlBody: confirm.html
+        htmlBody: confirm.html,
+        attachments: ek ? [ek] : undefined
       });
     } catch (err) {
       log('confirmation_error', { submission_id: sid, confirmation_recipient: d.email, error: errText_(err) });
@@ -596,47 +626,222 @@ function buildNotification_(d, meta, tabloSorunlu) {
   };
 }
 
-function buildConfirmation_(d, meta) {
-  const first = firstName_(d.fullName);
-  const t = d.lang === 'en'
-    ? {
-        subject: 'LARA Association | Your Membership Application Has Been Received',
-        greeting: 'Hello ' + first + ',',
-        lines: [
-          'Your membership application to LARA Association has been received successfully.',
-          'Your application will be reviewed by our board, and we will contact you by email once the evaluation is complete.',
-          'Thank you for your interest.'
+/* ---- TEYİT MAİLİ İÇERİĞİ ----------------------------------------------------
+   TR ve EN aynı veri yapısından üretilir; biri değişip diğeri unutulamaz.
+   Bölüm biçimi:
+     { baslik, giris:[], adimlar:[{baslik, satirlar:[]}], liste:[], kapanis:[], uyari:'' }
+   Tüm kullanıcı metni escapeHtml_ ile kaçırılır; başvuranın adı tek değişkendir. */
+function confirmationIcerik_(lang, first) {
+  if (lang === 'en') {
+    return {
+      subject: 'LARA Association | Your Membership Application Has Been Received',
+      greeting: 'Hello ' + first + ',',
+      giris: [
+        'Thank you for your interest in LARA Association (Learning • Action • Rights • Access) and for your preliminary membership application!',
+        'At LARA, we aim to increase young people\'s access to international opportunities, to support their education and personal development, and to strengthen intercultural interaction and social solidarity.',
+        'To this end, we bring young people together with new opportunities through Erasmus+ youth exchanges, training courses, international projects, social responsibility initiatives and cultural activities.'
+      ],
+      bolumler: [
+        {
+          baslik: 'Opportunities for Our Members',
+          giris: [
+            'When selecting participants for Erasmus+ projects that we run or partner in, we give priority to our members.',
+            'If our members are unable to take part, candidates who meet the project requirements and are recommended by our members may also be considered on a priority basis.'
+          ]
+        },
+        {
+          baslik: 'To Complete Your Membership Application',
+          giris: ['Your online preliminary application has been received successfully. To start your membership evaluation process, please complete the steps below.'],
+          adimlar: [
+            { baslik: 'Fill in the membership application form.', satirlar: [
+              'Download and print the membership application form attached to this email.',
+              'Complete the date, full name and signature fields in the first section. Then fill in all the information in the MEMBER INFORMATION section completely and accurately.',
+              'Sign the relevant section of the form with a handwritten (wet) signature.',
+              'The sections regarding the board decision and the notification of admission must be left blank at this stage.'
+            ] },
+            { baslik: 'Send us your signed form.', satirlar: [
+              'Scan the fully completed and hand-signed form and send it as a legible PDF file to ' + CONFIG.NOTIFY_TO + ' by email.'
+            ] },
+            { baslik: 'Your application will be evaluated.', satirlar: [
+              'Once your signed application form reaches us, your membership request will be evaluated by our board of directors.',
+              'The result of the evaluation will be communicated to you by email.'
+            ] }
+          ]
+        },
+        {
+          baslik: 'Membership Fees',
+          giris: ['Our association\'s membership fees are as follows:'],
+          liste: [
+            'Entrance fee (one-off): 500 TL',
+            'Membership fee (monthly): 500 TL'
+          ],
+          kapanis: [
+            'The total amount payable for the first membership is 1,000 TL.',
+            'In the following months, the membership fee continues at 500 TL.'
+          ],
+          uyari: 'Important: No payment is required at this stage. After your application has been evaluated positively, the bank account details, the payment plan and the next steps will be sent to you in a separate email.'
+        },
+        {
+          baslik: 'Activating Your Membership',
+          giris: [
+            'Once your application is accepted and the necessary membership procedures are completed, you will be added to our communication and announcement channels so that you can stay informed about our projects, events and new opportunities.',
+            'We invite you not only to become a member of an association, but to become part of the LARA community — learning, creating and building international opportunities together.',
+            'Thank you for your interest; we look forward to doing great things together!'
+          ]
+        }
+      ],
+      org: 'LARA Association'
+    };
+  }
+
+  return {
+    subject: 'LARA Derneği | Üyelik Başvurunuz Alındı',
+    greeting: 'Merhaba ' + first + ',',
+    giris: [
+      'LARA Derneği\'ne (Learning • Action • Rights • Access) göstermiş olduğunuz ilgi ve üyelik ön başvurunuz için teşekkür ederiz!',
+      'LARA olarak gençlerin uluslararası fırsatlara erişimini artırmayı, eğitim ve kişisel gelişimlerini desteklemeyi, kültürlerarası etkileşimi ve toplumsal dayanışmayı güçlendirmeyi amaçlıyoruz.',
+      'Bu doğrultuda Erasmus+ gençlik değişimleri, eğitim kursları, uluslararası projeler, sosyal sorumluluk çalışmaları ve kültürel etkinlikler aracılığıyla gençleri yeni fırsatlarla buluşturuyoruz.'
+    ],
+    bolumler: [
+      {
+        baslik: 'Üyelerimize Sunulan Fırsatlar',
+        giris: [
+          'Derneğimizin yürüttüğü veya ortak olduğu Erasmus+ projelerinde katılımcı seçiminde öncelikle üyelerimizi değerlendiriyoruz.',
+          'Üyelerimizin katılım sağlayamaması durumunda, proje koşullarını karşılayan ve üyelerimiz tarafından önerilen adaylar da öncelikli olarak değerlendirilebilmektedir.'
+        ]
+      },
+      {
+        baslik: 'Üyelik Başvurunuzu Tamamlamak İçin',
+        giris: ['Online ön başvurunuz başarıyla alınmıştır. Üyelik değerlendirme sürecinizin başlatılabilmesi için aşağıdaki işlemleri tamamlamanızı rica ederiz.'],
+        adimlar: [
+          { baslik: 'Üyelik başvuru formunu doldurun.', satirlar: [
+            'Bu e-postanın ekinde yer alan Lara Derneği Başvuru Formu\'nu indirip çıktısını alınız.',
+            'Formun ilk bölümündeki tarih, ad-soyad ve imza alanlarını doldurunuz. Ardından ÜYE BİLGİLERİ bölümünde yer alan tüm bilgileri eksiksiz ve doğru şekilde doldurunuz.',
+            'Formun ilgili bölümünü ıslak imza ile imzalayınız.',
+            'Yönetim kurulu kararı ve üyeliğe kabul bildirimiyle ilgili bölümler bu aşamada boş bırakılmalıdır.'
+          ] },
+          { baslik: 'İmzalı formunuzu bize gönderin.', satirlar: [
+            'Eksiksiz doldurduğunuz ve ıslak imzayla imzaladığınız formu tarayarak okunaklı bir PDF dosyası halinde ' + CONFIG.NOTIFY_TO + ' adresine e-posta yoluyla iletiniz.'
+          ] },
+          { baslik: 'Başvurunuz değerlendirilsin.', satirlar: [
+            'İmzalı başvuru formunuz tarafımıza ulaştıktan sonra üyelik talebiniz yönetim kurulumuz tarafından değerlendirilecektir.',
+            'Değerlendirme sonucu tarafınıza e-posta yoluyla bildirilecektir.'
+          ] }
+        ]
+      },
+      {
+        baslik: 'Üyelik Ücretleri',
+        giris: ['Derneğimizin üyelik ücretleri aşağıdaki gibidir:'],
+        liste: [
+          'Giriş ödentisi (bir defaya mahsus): 500 TL',
+          'Üyelik aidatı (her ay): 500 TL'
         ],
-        org: 'LARA Association'
+        kapanis: [
+          'İlk üyelikte ödenmesi gereken toplam tutar: 1.000 TL\'dir.',
+          'Sonraki aylarda üyelik aidatı 500 TL olarak devam edecektir.'
+        ],
+        uyari: 'Önemli: Bu aşamada herhangi bir ödeme yapmanız gerekmemektedir. Başvurunuzun olumlu değerlendirilmesinin ardından banka hesap bilgileri, ödeme planı ve sonraki işlemler tarafınıza ayrı bir e-posta ile iletilecektir.'
+      },
+      {
+        baslik: 'Üyeliğinizin Aktifleştirilmesi',
+        giris: [
+          'Başvurunuzun kabul edilmesi ve gerekli üyelik işlemlerinin tamamlanmasının ardından derneğimizin iletişim ve duyuru kanallarına dahil edilerek projelerimizden, etkinliklerimizden ve yeni fırsatlardan haberdar olabileceksiniz.',
+          'Sizleri yalnızca bir derneğin üyesi olmaya değil; birlikte öğrenen, üreten ve uluslararası fırsatlar yaratan LARA topluluğunun bir parçası olmaya davet ediyoruz.',
+          'İlginiz için teşekkür eder, birlikte güzel işler gerçekleştirmeyi dileriz!'
+        ]
       }
-    : {
-        subject: 'LARA Derneği | Üyelik Başvurunuz Alındı',
-        greeting: 'Merhaba ' + first + ',',
-        lines: [
-          'LARA Derneği üyelik başvurunuz başarıyla alınmıştır.',
-          'Başvurunuz yönetim kurulumuz tarafından değerlendirilecek ve değerlendirme sonucunda sizinle e-posta yoluyla iletişime geçilecektir.',
-          'İlginiz için teşekkür ederiz.'
-        ],
-        org: 'LARA Derneği'
-      };
+    ],
+    org: 'LARA Derneği'
+  };
+}
 
-  const tagline = 'Learning · Action · Rights · Access';
+function buildConfirmation_(d, meta) {
+  const t = confirmationIcerik_(d.lang, firstName_(d.fullName));
+  const tagline = 'Learning • Action • Rights • Access';
+  const yer = 'Antalya, Türkiye';
+  /* Büyük harfe çevirmede dil önemli: Türkçe'de i → İ, İngilizce'de i → I.
+     Tek bir yerel ayar kullanılırsa İngilizce başlıklar "MEMBERSHİP" olur. */
+  const yerelAyar = (d.lang === 'en') ? 'en-US' : 'tr-TR';
 
-  const text = t.greeting + '\n\n' + t.lines.join('\n\n') + '\n\n' +
-    t.org + '\n' + tagline + '\n' + CONFIG.SITE_URL;
+  /* ---------------- düz metin ---------------- */
+  const satirlar = [t.greeting, ''];
+  t.giris.forEach(function (p) { satirlar.push(p, ''); });
 
-  const p = 'margin:0 0 16px;font-size:15px;line-height:1.65;color:#10233B;';
+  t.bolumler.forEach(function (b) {
+    satirlar.push(b.baslik.toLocaleUpperCase(yerelAyar), '');
+    (b.giris || []).forEach(function (p) { satirlar.push(p, ''); });
+    (b.adimlar || []).forEach(function (a, i) {
+      satirlar.push((i + 1) + '. ' + a.baslik);
+      a.satirlar.forEach(function (x) { satirlar.push('   ' + x); });
+      satirlar.push('');
+    });
+    (b.liste || []).forEach(function (x) { satirlar.push('  - ' + x); });
+    if (b.liste && b.liste.length) satirlar.push('');
+    (b.kapanis || []).forEach(function (p) { satirlar.push(p, ''); });
+    if (b.uyari) satirlar.push(b.uyari, '');
+  });
+
+  satirlar.push('--', t.org, tagline, yer, CONFIG.NOTIFY_TO, 'https://' + CONFIG.SITE_URL);
+  const text = satirlar.join('\n').replace(/\n{3,}/g, '\n\n');
+
+  /* ---------------- HTML ---------------- */
+  const P  = 'margin:0 0 14px;font-size:15px;line-height:1.65;color:#10233B;';
+  const H  = 'margin:28px 0 12px;font-size:16px;line-height:1.4;color:#0B2D52;font-weight:bold;';
+  const LI = 'margin:0 0 6px;font-size:15px;line-height:1.6;color:#10233B;';
+
+  const parca = [];
+  parca.push('<p style="' + P + '">' + escapeHtml_(t.greeting) + '</p>');
+  t.giris.forEach(function (p) { parca.push('<p style="' + P + '">' + escapeHtml_(p) + '</p>'); });
+
+  t.bolumler.forEach(function (b) {
+    parca.push('<div style="' + H + '">' + escapeHtml_(b.baslik) + '</div>');
+    (b.giris || []).forEach(function (p) { parca.push('<p style="' + P + '">' + escapeHtml_(p) + '</p>'); });
+
+    (b.adimlar || []).forEach(function (a, i) {
+      parca.push(
+        '<div style="margin:0 0 14px;padding-left:34px;position:relative;">' +
+          '<div style="position:absolute;left:0;top:0;width:24px;height:24px;border-radius:12px;' +
+            'background:#159A9C;color:#ffffff;font-size:13px;font-weight:bold;line-height:24px;' +
+            'text-align:center;">' + (i + 1) + '</div>' +
+          '<p style="margin:2px 0 6px;font-size:15px;line-height:1.5;color:#0B2D52;font-weight:bold;">' +
+            escapeHtml_(a.baslik) + '</p>' +
+          a.satirlar.map(function (x) {
+            return '<p style="' + LI + '">' + escapeHtml_(x) + '</p>';
+          }).join('') +
+        '</div>');
+    });
+
+    if (b.liste && b.liste.length) {
+      parca.push('<ul style="margin:0 0 14px;padding-left:20px;">' +
+        b.liste.map(function (x) {
+          return '<li style="' + LI + '">' + escapeHtml_(x) + '</li>';
+        }).join('') + '</ul>');
+    }
+
+    (b.kapanis || []).forEach(function (p) { parca.push('<p style="' + P + '">' + escapeHtml_(p) + '</p>'); });
+
+    if (b.uyari) {
+      parca.push('<p style="margin:0 0 14px;padding:12px 14px;border-radius:10px;background:#FFF8F3;' +
+        'border:1px solid #FF684D;font-size:14px;line-height:1.6;color:#A02F18;">' +
+        escapeHtml_(b.uyari) + '</p>');
+    }
+  });
+
+  const imza =
+    '<div style="margin-top:28px;padding-top:18px;border-top:1px solid #E1E9EF;font-size:14px;line-height:1.7;color:#44546A;">' +
+      '<strong style="color:#0B2D52;">' + escapeHtml_(t.org) + '</strong><br>' +
+      '<span style="color:#159A9C;">' + escapeHtml_(tagline) + '</span><br>' +
+      escapeHtml_(yer) + '<br>' +
+      '<a href="mailto:' + CONFIG.NOTIFY_TO + '" style="color:#FF684D;text-decoration:none;">' + CONFIG.NOTIFY_TO + '</a><br>' +
+      '<a href="https://' + CONFIG.SITE_URL + '" style="color:#FF684D;text-decoration:none;">https://' + CONFIG.SITE_URL + '</a>' +
+    '</div>';
+
   const html =
     '<div style="background:#F1F6F8;padding:24px 12px;font-family:Arial,Helvetica,sans-serif;">' +
-      '<div style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #E1E9EF;border-radius:14px;padding:32px 28px;">' +
+      '<div style="max-width:620px;margin:0 auto;background:#ffffff;border:1px solid #E1E9EF;border-radius:14px;padding:32px 28px;">' +
         gizliReferans_(meta) +
-        '<p style="' + p + '">' + escapeHtml_(t.greeting) + '</p>' +
-        t.lines.map(function (l) { return '<p style="' + p + '">' + escapeHtml_(l) + '</p>'; }).join('') +
-        '<div style="margin-top:26px;padding-top:18px;border-top:1px solid #E1E9EF;font-size:14px;line-height:1.6;">' +
-          '<strong style="color:#0B2D52;">' + escapeHtml_(t.org) + '</strong><br>' +
-          '<span style="color:#159A9C;">' + escapeHtml_(tagline) + '</span><br>' +
-          '<a href="https://' + CONFIG.SITE_URL + '" style="color:#FF684D;text-decoration:none;">' + CONFIG.SITE_URL + '</a>' +
-        '</div>' +
+        parca.join('') +
+        imza +
       '</div>' +
     '</div>';
 
@@ -795,6 +1000,88 @@ function sutunHarfi_(n) {
 }
 
 
+/** Drive dosya kimliğini çözer. FORM_PDF_ID özelliğine kullanıcı ister çıplak
+    kimliği ister tam paylaşım bağlantısını yapıştırabilsin diye — "Bağlantıyı
+    kopyala" ile alınan adresi olduğu gibi yapıştırmak en sık yapılan şey.
+      https://drive.google.com/file/d/KIMLIK/view?usp=drive_link  → KIMLIK
+      https://drive.google.com/open?id=KIMLIK                     → KIMLIK
+      KIMLIK                                                      → KIMLIK      */
+function pdfKimligiCoz_(deger) {
+  const s = String(deger === null || deger === undefined ? '' : deger).trim();
+  if (!s) return '';
+  let m = /\/d\/([A-Za-z0-9_-]{10,})/.exec(s);          // .../file/d/KIMLIK/view
+  if (m) return m[1];
+  m = /[?&]id=([A-Za-z0-9_-]{10,})/.exec(s);             // ...open?id=KIMLIK
+  if (m) return m[1];
+  m = /^([A-Za-z0-9_-]{10,})$/.exec(s);                  // çıplak kimlik
+  if (m) return m[1];
+  return '';
+}
+
+/* ------------------------- BAŞVURU FORMU EKİ -------------------------
+   Teyit mailine eklenecek PDF'i Drive'dan okur.
+
+   Dönüş:
+     Blob  → ek hazır
+     null  → FORM_PDF_ID tanımlı değil; özellik henüz kurulmamış sayılır,
+             mail eksiz gider (bilinçli "kapalı" durumu)
+     throw → kimlik TANIMLI ama dosya okunamıyor. Çağıran taraftaki mevcut
+             catch bunu CONFIRMATION_FAILED'e çevirir: eksik ekli teyit maili
+             ASLA gönderilmez ve başarılı sayılmaz.
+
+   Günlüğe dosya kimliği YAZILMAZ. */
+function basvuruFormuEki_(deps) {
+  const C = CONFIG.FORM_PDF;
+
+  let ham;
+  try {
+    ham = deps.scriptProperty(C.ID_PROPERTY);
+  } catch (err) {
+    deps.log('attachment_error', { reason: 'PROPERTY_READ', error: errText_(err) });
+    throw new Error('EK: özellik okunamadı');
+  }
+
+  /* Özellik HİÇ tanımlı değilse: özellik kapalı sayılır, mail eksiz gider.
+     Tanımlı AMA kimlik çözülemiyorsa (yazım hatası, eksik yapıştırma): SESSİZCE
+     geçilmez, hata fırlatılır. Yoksa bir harf hatası tüm ekleri sessizce kapatır. */
+  const hamMetin = String(ham === null || ham === undefined ? '' : ham).trim();
+  if (!hamMetin) {
+    deps.log('attachment_skipped', { reason: 'NOT_CONFIGURED' });
+    return null;
+  }
+
+  const id = pdfKimligiCoz_(hamMetin);
+  if (!id) {
+    deps.log('attachment_error', { reason: 'BAD_ID', length: hamMetin.length });
+    throw new Error('EK: FORM_PDF_ID çözülemedi');
+  }
+
+  let blob;
+  try {
+    blob = deps.drive.pdfBlob(id);
+  } catch (err) {
+    /* Dosya silinmiş, çöp kutusunda, kimlik yanlış ya da hesabın erişimi yok. */
+    deps.log('attachment_error', { reason: 'FETCH', error: errText_(err) });
+    throw new Error('EK: dosya alınamadı');
+  }
+
+  if (!blob) {
+    deps.log('attachment_error', { reason: 'NULL_BLOB' });
+    throw new Error('EK: dosya boş döndü');
+  }
+
+  let boyut = 0;
+  try { boyut = blob.getBytes().length; } catch (err) { boyut = 0; }
+  if (!boyut) {
+    deps.log('attachment_error', { reason: 'EMPTY' });
+    throw new Error('EK: dosya boş');
+  }
+
+  deps.log('attachment_ready', { bytes: boyut });
+  return blob.setName(C.DOSYA_ADI);
+}
+
+
 /* ---------------------------- TURNSTILE ----------------------------
    Jeton Cloudflare'ın siteverify ucunda doğrulanır. Dönen değerler:
      'ok'           → doğrulandı (ya da doğrulama kapalı ve jeton yok)
@@ -896,6 +1183,7 @@ function defaultDeps_() {
       send: function (message) {
         const options = { htmlBody: message.htmlBody, name: message.name };
         if (message.replyTo) options.replyTo = message.replyTo;
+        if (message.attachments) options.attachments = message.attachments;
         GmailApp.sendEmail(message.to, message.subject, message.body, options);
       },
       remaining: function () { return MailApp.getRemainingDailyQuota(); }
@@ -915,6 +1203,11 @@ function defaultDeps_() {
         if (!id) return null;
         return SpreadsheetApp.openById(id).getSheetByName(CONFIG.SHEETS.SAYFA);
       }
+    },
+    /* Drive'dan salt okuma. Dosya kimliği yalnızca script özelliğinden gelir;
+       başvurandan gelen hiçbir veri bu çağrıya karışmaz. */
+    drive: {
+      pdfBlob: function (id) { return DriveApp.getFileById(id).getBlob(); }
     },
     scriptProperty: function (name) {
       return PropertiesService.getScriptProperties().getProperty(name);
@@ -1239,10 +1532,24 @@ function bicimKurallariKur_(basvuru, ayirac) {
     .setBackground(renk.turuncu)
     .setRanges([basvuru.getRange(2, sutun('EPOSTA'), son, 1)]).build());
 
-  // onaylandı ama Üyelik Tarihi boş -> hatırlatma
+  /* Üyelik Tarihi görünürlüğü — iki kural, birbirini dışlar.
+     DEĞER HER ZAMAN DURUR; değişen yalnızca görünürlüktür. Hücreye tıklayınca
+     tarih formül çubuğunda görünmeye devam eder, hiçbir veri kaybolmaz. */
+  const odemeHarf2 = sutunHarfi_(sutun('ODEME_DURUM'));
+  const ikisiDe = 'AND($' + odemeHarf2 + '2="' + S.AKTIF_FILTRE.ODEME + '"' + A +
+                  '$' + uyelikHarf + '2="' + S.AKTIF_FILTRE.UYELIK + '")';
+
+  // 1) İkisi de onaylı ama tarih BOŞ -> sarı hatırlatma
   kurallar.push(SpreadsheetApp.newConditionalFormatRule()
-    .whenFormulaSatisfied('=AND($' + uyelikHarf + '2="Onaylandı"' + A + '$' + uyTarihHarf + '2="")')
+    .whenFormulaSatisfied('=AND(' + ikisiDe + A + '$' + uyTarihHarf + '2="")')
     .setBackground(renk.sari)
+    .setRanges([basvuru.getRange(2, sutun('UYELIK_TARIH'), son, 1)]).build());
+
+  // 2) Tarih DOLU ama koşullar artık sağlanmıyor -> yazıyı gizle (beyaz).
+  //    Değer silinmez; durum tekrar Ödendi + Onaylandı olunca aynı tarih geri görünür.
+  kurallar.push(SpreadsheetApp.newConditionalFormatRule()
+    .whenFormulaSatisfied('=AND($' + uyTarihHarf + '2<>""' + A + 'NOT(' + ikisiDe + '))')
+    .setFontColor('#FFFFFF')
     .setRanges([basvuru.getRange(2, sutun('UYELIK_TARIH'), son, 1)]).build());
 
   basvuru.setConditionalFormatRules(kurallar);
@@ -1346,6 +1653,34 @@ function ayiracOnarimi() {
     '',
     hatali(a2) ? 'Hâlâ hata varsa: #NAME? → aktifFormuluQueryYap() | #REF! → Sayfa 2\'yi temizleyip tekrar çalıştır'
                : 'Doğrulamak için formulDurumu() çalıştır.'
+  ].join('\n'));
+}
+
+/** Yalnızca KOŞULLU BİÇİM kurallarını yeniden kurar. Hiçbir hücre DEĞERİNE,
+    formüle, açılır listeye, sütun biçimine veya Aktif Üyeler sayfasına dokunmaz.
+    Üyelik Tarihi görünürlük kuralı değiştiğinde bunu çalıştırmak yeterlidir. */
+function bicimOnarimi() {
+  const S = CONFIG.SHEETS;
+  const id = PropertiesService.getScriptProperties().getProperty(S.ID_PROPERTY);
+  if (!id) { console.log('HATA: ' + S.ID_PROPERTY + ' tanımlı değil.'); return; }
+
+  const ss = SpreadsheetApp.openById(id);
+  const basvuru = ss.getSheetByName(S.SAYFA);
+  if (!basvuru) { console.log('HATA: "' + S.SAYFA + '" bulunamadı.'); return; }
+
+  const oncekiSatir = basvuru.getLastRow();
+  const ayirac = ayiracBelirle_(ss);
+  const kuralSayisi = bicimKurallariKur_(basvuru, ayirac);
+  SpreadsheetApp.flush();
+
+  console.log([
+    'BİÇİM ONARIMI TAMAM',
+    '  Kayıt sayısı     : ' + Math.max(oncekiSatir - 1, 0) + ' (değişmedi — veriye dokunulmadı)',
+    '  Kural sayısı     : ' + kuralSayisi,
+    '  Ayıraç           : "' + ayirac + '"',
+    '',
+    'Üyelik Tarihi artık yalnızca Ödeme="' + S.AKTIF_FILTRE.ODEME + '" ve',
+    'Üyelik="' + S.AKTIF_FILTRE.UYELIK + '" iken görünür. Değer silinmez, gizlenir.'
   ].join('\n'));
 }
 
@@ -1491,6 +1826,225 @@ function detayLinkleriSatirBazliYap(satirSayisi) {
 }
 
 
+/* ==================== ÜYELİK TARİHİ OTOMASYONU ====================
+   Ödeme Durumu = "Ödendi" VE Üyelik Durumu = "Onaylandı" olduğu anda, aynı satırdaki
+   Üyelik Tarihi hücresi o günün tarihiyle doldurulur.
+
+   Kurallar:
+     - İki koşul da sağlanmalı; hangisinin önce değiştiği önemsiz.
+     - Tarih SABİTTİR: gerçek bir Date yazılır, TODAY()/NOW() gibi formül kullanılmaz.
+     - Üyelik Tarihi DOLUYSA asla üzerine yazılmaz — geçmiş tarihler korunur.
+     - Durum geri alınırsa tarih SİLİNMEZ; üyeliğin ilk kez koşulları sağladığı
+       tarihi temsil eder, her aidat ödemesinde yenilenmez.
+     - Yalnızca "Üyelik Başvuruları" sayfasında çalışır; "Aktif Üyeler" sayfasına
+       hiç dokunulmaz (orası FILTER formülüdür, kendiliğinden güncellenir).
+     - Yalnızca Üyelik Tarihi sütununa yazar; başka hiçbir sütuna dokunmaz.
+
+   Kilit KULLANILMAZ: LockService proje genelinde tektir ve doPost onu saniyelerce
+   tutar. Yönetimin düzenlemeleri form gönderimlerinin arkasında kuyruğa girmesin
+   diye kilitsiz çalışır — ikisi farklı satırlara yazdığı için çakışma yoktur.     */
+
+/** Başlık adı -> 1 tabanlı sütun numarası. Sütun sırası değişse de doğru hücre bulunur.
+    kaydetSheets_ içindeki eşlemeden BAĞIMSIZ tutuldu; o fonksiyona dokunulmadı. */
+function basliklariHarita_(sayfa) {
+  const sutunSayisi = Math.max(sayfa.getLastColumn(), CONFIG.SHEETS.SIRA.length);
+  if (sutunSayisi < 1) return null;
+  const basliklar = sayfa.getRange(1, 1, 1, sutunSayisi).getValues()[0];
+  const harita = {};
+  basliklar.forEach(function (b, i) {
+    const ad = String(b === null || b === undefined ? '' : b).trim();
+    if (ad && !(ad in harita)) harita[ad] = i + 1;
+  });
+  return harita;
+}
+
+/** Europe/Istanbul'a göre bugünün tarihi — saat bileşeni olmadan. */
+function bugunIstanbul_() {
+  const p = Utilities.formatDate(new Date(), CONFIG.TIMEZONE, 'yyyy-MM-dd').split('-');
+  return new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+}
+
+/** ÇEKİRDEK KARAR — saf fonksiyon, Sheets'e bağlı değil, bu yüzden test edilebilir.
+    Girdi : [{ satir, odeme, uyelik, tarih }]
+    Çıktı : [{ satir, tarih }] — yalnızca YAZILACAK satırlar
+    Hiçbir yan etkisi yoktur. */
+function uyelikTarihiHesapla_(satirlar, bugun) {
+  const F = CONFIG.SHEETS.AKTIF_FILTRE;
+  const yazilacak = [];
+  (satirlar || []).forEach(function (r) {
+    if (String(r.odeme === null || r.odeme === undefined ? '' : r.odeme).trim() !== F.ODEME) return;
+    if (String(r.uyelik === null || r.uyelik === undefined ? '' : r.uyelik).trim() !== F.UYELIK) return;
+    // Dolu hücreye ASLA dokunma. Date, metin ya da sayı — hepsi "dolu" sayılır.
+    const mevcut = r.tarih;
+    if (mevcut instanceof Date) return;
+    if (mevcut !== null && mevcut !== undefined && String(mevcut).trim() !== '') return;
+    yazilacak.push({ satir: r.satir, tarih: bugun });
+  });
+  return yazilacak;
+}
+
+/** Sayfadan satır bloğu okur ve çekirdeğe verilecek biçime getirir. Yazma yapmaz. */
+function uyelikTarihiSatirlariOku_(sayfa, harita, ilkSatir, satirSayisi) {
+  const B = CONFIG.SHEETS.BASLIK;
+  const q = harita[B.ODEME_DURUM], t = harita[B.UYELIK_DURUM], v = harita[B.UYELIK_TARIH];
+  if (!q || !t || !v) return null;
+
+  const sol = Math.min(q, t, v), sag = Math.max(q, t, v);
+  const blok = sayfa.getRange(ilkSatir, sol, satirSayisi, sag - sol + 1).getValues();
+  return blok.map(function (r, i) {
+    return {
+      satir: ilkSatir + i,
+      odeme: r[q - sol],
+      uyelik: r[t - sol],
+      tarih: r[v - sol]
+    };
+  });
+}
+
+/** KURULABİLİR onEdit TETİKLEYİCİSİ — elle çalıştırılmaz, düzenlemelerde Google çağırır.
+    Hata fırlatmaz: sorun olursa günlüğe yazar ve sessizce çıkar, tabloyu bozmaz. */
+function uyelikTarihiTetikleyici(e) {
+  try {
+    if (!e || !e.range) return;
+    const S = CONFIG.SHEETS, B = S.BASLIK;
+    const sayfa = e.range.getSheet();
+    if (sayfa.getName() !== S.SAYFA) return;              // yalnızca Üyelik Başvuruları
+
+    const harita = basliklariHarita_(sayfa);
+    if (!harita) return;
+    const q = harita[B.ODEME_DURUM], t = harita[B.UYELIK_DURUM], v = harita[B.UYELIK_TARIH];
+    if (!q || !t || !v) {
+      console.error(JSON.stringify({ event: 'uyelik_tarihi_error', reason: 'HEADERS_MISSING' }));
+      return;
+    }
+
+    /* Düzenleme Ödeme Durumu ya da Üyelik Durumu sütununa değmediyse hiç uğraşma.
+       Üyelik Tarihi'nin kendisi elle düzenlendiyse de karışma — yönetimin girdisi esastır. */
+    const solSut = e.range.getColumn(), sagSut = e.range.getLastColumn();
+    const degdi = (solSut <= q && q <= sagSut) || (solSut <= t && t <= sagSut);
+    if (!degdi) return;
+
+    const basla = Math.max(e.range.getRow(), 2);          // başlık satırı atlanır
+    const son = e.range.getLastRow();
+    if (son < basla) return;
+
+    const n = son - basla + 1;
+    if (n > S.UYELIK_TARIHI.MAX_SATIR) {
+      console.error(JSON.stringify({ event: 'uyelik_tarihi_error', reason: 'TOO_MANY_ROWS', rows: n }));
+      return;
+    }
+
+    const satirlar = uyelikTarihiSatirlariOku_(sayfa, harita, basla, n);
+    if (!satirlar) return;
+
+    const yazilacak = uyelikTarihiHesapla_(satirlar, bugunIstanbul_());
+    if (!yazilacak.length) return;
+
+    yazilacak.forEach(function (y) { sayfa.getRange(y.satir, v).setValue(y.tarih); });
+    console.log(JSON.stringify({
+      event: 'uyelik_tarihi_yazildi',
+      rows: yazilacak.map(function (y) { return y.satir; }).join(',')
+    }));
+  } catch (err) {
+    console.error(JSON.stringify({ event: 'uyelik_tarihi_error', reason: 'RUNTIME', error: errText_(err) }));
+  }
+}
+
+/** Tetikleyiciyi kurar. Önce aynı adlı tetikleyicileri siler → çift kurulum olmaz.
+    Tetikleyici KURAN HESAP adına çalışır; info@laraassociation.org ile çalıştır. */
+function uyelikTarihiTetikleyicisiKur() {
+  const S = CONFIG.SHEETS;
+  const id = PropertiesService.getScriptProperties().getProperty(S.ID_PROPERTY);
+  if (!id) { console.log('HATA: ' + S.ID_PROPERTY + ' tanımlı değil.'); return; }
+
+  const silinen = uyelikTarihiTetikleyicisiKaldir();
+  const tetik = ScriptApp.newTrigger(S.UYELIK_TARIHI.TETIKLEYICI).forSpreadsheet(id).onEdit().create();
+
+  const kalan = ScriptApp.getProjectTriggers().filter(function (tr) {
+    return tr.getHandlerFunction() === S.UYELIK_TARIHI.TETIKLEYICI;
+  }).length;
+
+  /* Tetikleyiciyi KURAN hesap adına çalışır. Hangi hesap olduğunu buraya YAZMIYORUZ:
+     Session.getEffectiveUser() ek bir OAuth izni (userinfo.email) ister ve yalnızca
+     bir günlük satırı için fazladan yetki istemek doğru değil. Sahip hesabı soldaki
+     ⏰ Tetikleyiciler ekranında görebilirsin. */
+  console.log([
+    'TETİKLEYİCİ KURULDU',
+    '  Fonksiyon        : ' + S.UYELIK_TARIHI.TETIKLEYICI,
+    '  Tetikleyici no   : ' + tetik.getUniqueId(),
+    '  Önce silinen     : ' + silinen + ' (çift kurulum koruması)',
+    '  Şu an kurulu     : ' + kalan + ' (1 olmalı)',
+    '  Hedef sayfa      : ' + S.SAYFA,
+    '',
+    'Tetikleyici, bu fonksiyonu ÇALIŞTIRAN hesap adına çalışır.',
+    'Sahibini doğrulamak için soldaki ⏰ Tetikleyiciler ekranına bak.',
+    'Ne yazılacağını görmek için uyelikTarihiOnizleme() — hiçbir şey yazmaz.'
+  ].join('\n'));
+}
+
+/** Aynı adlı tüm tetikleyicileri siler. Kaç tane silindiğini döner. */
+function uyelikTarihiTetikleyicisiKaldir() {
+  const ad = CONFIG.SHEETS.UYELIK_TARIHI.TETIKLEYICI;
+  let n = 0;
+  ScriptApp.getProjectTriggers().forEach(function (tr) {
+    if (tr.getHandlerFunction() === ad) { ScriptApp.deleteTrigger(tr); n++; }
+  });
+  return n;
+}
+
+/** Kurulu tetikleyicileri listeler. Hiçbir şey değiştirmez. */
+function tetikleyiciDurumu() {
+  const tr = ScriptApp.getProjectTriggers();
+  console.log('Kurulu tetikleyici sayısı: ' + tr.length);
+  tr.forEach(function (x) {
+    console.log('  • ' + x.getHandlerFunction() + '  [' + x.getEventType() + ' / ' + x.getTriggerSource() + ']');
+  });
+  if (!tr.length) console.log('  (hiç yok)');
+}
+
+/** ÖNİZLEME — tabloyu yalnızca OKUR, HİÇBİR ŞEY YAZMAZ.
+    Koşulları sağlayıp Üyelik Tarihi boş olan satırları listeler.
+    Hem "tetikleyici kurulsa ne yazardı" sorusunun hem de eksik tarih raporunun yanıtı. */
+function uyelikTarihiOnizleme() {
+  const S = CONFIG.SHEETS, B = S.BASLIK;
+  const id = PropertiesService.getScriptProperties().getProperty(S.ID_PROPERTY);
+  if (!id) { console.log('HATA: ' + S.ID_PROPERTY + ' tanımlı değil.'); return; }
+
+  const sayfa = SpreadsheetApp.openById(id).getSheetByName(S.SAYFA);
+  if (!sayfa) { console.log('HATA: "' + S.SAYFA + '" bulunamadı.'); return; }
+
+  const harita = basliklariHarita_(sayfa);
+  const sonSatir = sayfa.getLastRow();
+  if (sonSatir < 2) { console.log('Tabloda kayıt yok.'); return; }
+
+  const satirlar = uyelikTarihiSatirlariOku_(sayfa, harita, 2, sonSatir - 1);
+  if (!satirlar) { console.log('HATA: Ödeme/Üyelik/Tarih sütunlarından biri bulunamadı.'); return; }
+
+  const bugun = bugunIstanbul_();
+  const yazilacak = uyelikTarihiHesapla_(satirlar, bugun);
+  const adSutun = harita[B.AD];
+  const adlar = adSutun ? sayfa.getRange(2, adSutun, sonSatir - 1, 1).getValues() : null;
+
+  console.log([
+    'ÖNİZLEME — hiçbir şey yazılmadı',
+    '  Toplam kayıt       : ' + satirlar.length,
+    '  Tarihi dolu        : ' + satirlar.filter(function (r) {
+        return r.tarih instanceof Date || String(r.tarih || '').trim() !== ''; }).length,
+    '  Koşulu sağlayıp boş: ' + yazilacak.length,
+    '  Yazılacak tarih    : ' + Utilities.formatDate(bugun, CONFIG.TIMEZONE, 'dd.MM.yyyy'),
+    ''
+  ].join('\n'));
+
+  if (!yazilacak.length) { console.log('  Doldurulacak satır yok.'); return; }
+  yazilacak.forEach(function (y) {
+    const ad = adlar ? String(adlar[y.satir - 2][0]) : '';
+    console.log('  satır ' + y.satir + '  ' + ad);
+  });
+  console.log('\nBu satırlar GEÇMİŞ üyelerse bugünün tarihi YANLIŞ olur — doğru tarihi elle gir.');
+  console.log('Tetikleyici yalnızca BUNDAN SONRAKİ durum değişikliklerinde çalışır,');
+  console.log('yukarıdaki satırları kendiliğinden doldurmaz.');
+}
+
 /* ==================== EDİTÖRDEN ÇALIŞTIRILACAK TESTLER ====================
    Apps Script editöründe üstteki fonksiyon listesinden seçip "Çalıştır" de.   */
 
@@ -1503,7 +2057,13 @@ const TEST_TEYIT_ADRESI = '';
    Canlı akış (doPost) her zaman gerçek doğrulamayı kullanır. */
 function testDeps_() {
   const deps = defaultDeps_();
-  deps.scriptProperty = function () { return 'test'; };
+  /* YALNIZCA Turnstile gizli anahtarı taklit edilir. Diğer özellikler (FORM_PDF_ID,
+     SHEET_ID ...) GERÇEK değerleriyle okunur — yoksa editör testleri PDF ekini
+     bulamaz ve teyit maili CONFIRMATION_FAILED ile düşer. */
+  deps.scriptProperty = function (name) {
+    if (name === CONFIG.TURNSTILE.SECRET_PROPERTY) return 'test';
+    return PropertiesService.getScriptProperties().getProperty(name);
+  };
   deps.fetchJson = function () { return { success: true }; };
   /* Editör testleri gerçek tabloya YAZMAZ; tabloyu sahte veriyle kirletmemek için.
      Gerçek yazmayı denemek için testSheetsGercekYazma() kullan. */
@@ -1580,6 +2140,40 @@ function testFormulGuvenligi() {
   ['=IMPORTXML("http://x","//a")', '+1+1', '-5', '@foo', 'Ayşe Yılmaz', '+90 555 111 22 33', ''].forEach(function (v) {
     console.log(JSON.stringify(v) + '  →  ' + JSON.stringify(formulGuvenli_(v)));
   });
+}
+
+/** Drive erişimini TEK BAŞINA sınar. Mail GÖNDERMEZ, tabloya yazmaz.
+    Dağıtımdan önce bu MUTLAKA çalıştırılmalı: FORM_PDF_ID yanlışsa tüm teyit
+    mailleri durur. Dosya kimliğini günlüğe yazmaz. */
+function testEkAlma() {
+  const deps = defaultDeps_();
+  try {
+    const ek = basvuruFormuEki_(deps);
+    if (!ek) {
+      console.log('FORM_PDF_ID tanımlı DEĞİL → özellik kapalı, mail eksiz gider.\n' +
+                  'Kurmak için Proje Ayarları → Komut Dosyası Özellikleri → FORM_PDF_ID');
+      return;
+    }
+    console.log([
+      'EK HAZIR',
+      '  Dosya adı  : ' + ek.getName(),
+      '  Tür        : ' + ek.getContentType(),
+      '  Boyut      : ' + Math.round(ek.getBytes().length / 1024) + ' KB',
+      '',
+      'Teyit maili bu dosyayı ek olarak gönderecek.'
+    ].join('\n'));
+  } catch (err) {
+    console.log([
+      'EK ALINAMADI → ' + errText_(err),
+      '',
+      'Bu durumda teyit maili GÖNDERİLMEZ (eksik ekli mail başarılı sayılmaz).',
+      'Kontrol et:',
+      '  • FORM_PDF_ID doğru mu? (Drive bağlantısındaki /d/ ile /view arası)',
+      '  • Dosya çöp kutusunda veya silinmiş mi?',
+      '  • Scripti çalıştıran hesap dosyaya erişebiliyor mu?',
+      '  • appsscript.json içinde drive.readonly izni var mı?'
+    ].join('\n'));
+  }
 }
 
 /* Gizli anahtarın tanımlı olup olmadığını gösterir. Anahtarın DEĞERİNİ yazmaz. */
@@ -1659,6 +2253,13 @@ function ornekBasvuru_(lang, submissionId) {
     motivation: 'Erasmus+ projelerinde yer almak istiyorum.',
     consentPrinciples: true,
     consentKvkk: true,
-    honey: ''
+    honey: '',
+    /* Editör testleri tarayıcıdan geçmediği için gerçek Turnstile jetonu üretemez.
+       Buradaki sahte jeton yalnızca "jeton hiç gelmedi" kontrolünü geçmek içindir;
+       asıl doğrulamayı testDeps_ içindeki sahte fetchJson onaylar. CONFIG.TURNSTILE
+       .REQUIRED true olduğundan bu alan olmadan editör testleri TURNSTILE_MISSING
+       ile reddedilir. Canlı akış (doPost) her zaman tarayıcıdan gelen gerçek jetonu
+       kullanır; bu sabit oraya hiç ulaşmaz. */
+    turnstileToken: 'editor-testi'
   };
 }
